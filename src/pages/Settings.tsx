@@ -65,13 +65,13 @@ export const Settings: React.FC = () => {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Manage your business information</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage your business information</p>
       </div>
 
       {/* Business Information */}
       <Card>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Business Information</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Business Information</h2>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
@@ -133,7 +133,7 @@ export const Settings: React.FC = () => {
             />
           </div>
 
-          <Button type="submit" loading={saving}>
+          <Button type="submit" loading={saving} className="w-full sm:w-auto">
             <Save className="w-4 h-4" />
             Save Settings
           </Button>
@@ -142,7 +142,7 @@ export const Settings: React.FC = () => {
 
       {/* Logo */}
       <Card>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Business Logo</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Business Logo</h2>
         <div className="space-y-4">
           {formData.logo && (
             <div className="flex justify-center">
@@ -167,6 +167,7 @@ export const Settings: React.FC = () => {
               type="button"
               variant="danger"
               onClick={() => setFormData({ ...formData, logo: undefined })}
+              className="w-full sm:w-auto"
             >
               Remove Logo
             </Button>
@@ -176,8 +177,8 @@ export const Settings: React.FC = () => {
 
       {/* About App */}
       <Card>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">About Bookkeeper</h2>
-        <div className="space-y-3 text-gray-600 text-sm">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">About Bookkeeper</h2>
+        <div className="space-y-3 text-gray-600 dark:text-gray-400 text-sm">
           <p>
             <strong>Version:</strong> 1.0.0
           </p>

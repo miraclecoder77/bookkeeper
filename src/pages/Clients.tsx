@@ -88,16 +88,17 @@ export const Clients: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
-          <p className="text-gray-600">Manage your client information</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Clients</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your client information</p>
         </div>
         <Button
           onClick={() => {
             handleReset();
             setShowForm(!showForm);
           }}
+          className="w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           Add Client
@@ -107,7 +108,7 @@ export const Clients: React.FC = () => {
       {/* Form */}
       {showForm && (
         <Card>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
             {editingId ? 'Edit Client' : 'Add New Client'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -146,8 +147,8 @@ export const Clients: React.FC = () => {
               placeholder="123 Main St, Anytown, USA"
             />
 
-            <div className="flex space-x-2">
-              <Button type="submit">{editingId ? 'Update Client' : 'Add Client'}</Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Update Client' : 'Add Client'}</Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -155,6 +156,7 @@ export const Clients: React.FC = () => {
                   setShowForm(false);
                   handleReset();
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -179,7 +181,7 @@ export const Clients: React.FC = () => {
           filteredClients.map((client) => (
             <Card key={client.id} className="relative">
               <div className="flex justify-between items-start mb-3">
-                <h3 className="text-lg font-bold text-gray-900">{client.name}</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 pr-3 break-words">{client.name}</h3>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEdit(client)}
@@ -201,30 +203,30 @@ export const Clients: React.FC = () => {
               <div className="space-y-2 text-sm">
                 {client.email && (
                   <p>
-                    <span className="text-gray-600">Email:</span>
-                    <a href={`mailto:${client.email}`} className="text-blue-600 ml-1 hover:underline">
+                    <span className="text-gray-600 dark:text-gray-400">Email:</span>
+                    <a href={`mailto:${client.email}`} className="text-blue-600 dark:text-blue-400 ml-1 hover:underline break-all">
                       {client.email}
                     </a>
                   </p>
                 )}
                 {client.phone && (
                   <p>
-                    <span className="text-gray-600">Phone:</span>
-                    <a href={`tel:${client.phone}`} className="text-blue-600 ml-1 hover:underline">
+                    <span className="text-gray-600 dark:text-gray-400">Phone:</span>
+                    <a href={`tel:${client.phone}`} className="text-blue-600 dark:text-blue-400 ml-1 hover:underline">
                       {client.phone}
                     </a>
                   </p>
                 )}
                 {client.address && (
                   <p>
-                    <span className="text-gray-600">Address:</span>
-                    <span className="text-gray-900 ml-1">{client.address}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Address:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1 break-words">{client.address}</span>
                   </p>
                 )}
                 {client.taxId && (
                   <p>
-                    <span className="text-gray-600">Tax ID:</span>
-                    <span className="text-gray-900 ml-1">{client.taxId}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Tax ID:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{client.taxId}</span>
                   </p>
                 )}
               </div>

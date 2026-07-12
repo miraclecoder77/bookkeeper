@@ -15,11 +15,11 @@ const StatCard: React.FC<{
   icon: React.ReactNode;
   trend?: string;
 }> = ({ title, value, icon, trend }) => (
-  <Card className="flex items-center space-x-4">
+  <Card className="flex items-center gap-4">
     <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">{icon}</div>
     <div className="flex-1">
       <p className="text-gray-600 dark:text-gray-400 text-sm">{title}</p>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 break-words">{value}</p>
       {trend && <p className="text-sm text-green-600 dark:text-green-400">{trend}</p>}
     </div>
   </Card>
@@ -27,7 +27,7 @@ const StatCard: React.FC<{
 
 export const Dashboard: React.FC = () => {
   const { transactions } = useTransactions();
-  const { invoices, getInvoicesByStatus, calculateTotalByStatus } = useInvoices();
+  const { getInvoicesByStatus, calculateTotalByStatus } = useInvoices();
   const { settings } = useSettings();
   const { theme } = useTheme();
 
@@ -166,7 +166,42 @@ export const Dashboard: React.FC = () => {
       <Card>
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Recent Transactions</h2>
         {recentTransactions.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+            <div className="space-y-3 md:hidden">
+              {recentTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">{transaction.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant={transaction.type === 'income' ? 'success' : 'danger'}>
+                      {transaction.type}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Category</p>
+                      <p className="text-gray-900 dark:text-gray-100">{transaction.category}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Amount</p>
+                      <p className={`font-semibold ${transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, settings?.currency)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm text-gray-900 dark:text-gray-100">
               <thead className="border-b border-gray-200 dark:border-gray-700">
                 <tr>
@@ -195,7 +230,8 @@ export const Dashboard: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 text-center py-8">No transactions yet</p>
         )}

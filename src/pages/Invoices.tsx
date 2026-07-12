@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -9,9 +8,9 @@ import { Badge } from '../components/Badge';
 import { useInvoices } from '../hooks/useInvoices';
 import { useClients } from '../hooks/useClients';
 import { useSettings } from '../hooks/useSettings';
-import { formatCurrency, getCurrencySymbol } from '../utils/currency';
+import { formatCurrency } from '../utils/currency';
 import { Invoice, LineItem } from '../types';
-import { Plus, Trash2, Download, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Download } from 'lucide-react';
 
 export const Invoices: React.FC = () => {
   const { invoices, addInvoice, updateInvoice, deleteInvoice } = useInvoices();
@@ -225,12 +224,12 @@ export const Invoices: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-          <p className="text-gray-600">Create and manage your invoices</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Invoices</h1>
+          <p className="text-gray-600 dark:text-gray-400">Create and manage your invoices</p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); setEditingId(null); }}>
+        <Button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="w-full sm:w-auto">
           <Plus className="w-4 h-4" />
           New Invoice
         </Button>
@@ -239,11 +238,11 @@ export const Invoices: React.FC = () => {
       {/* Form */}
       {showForm && (
         <Card>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
             {editingId ? 'Edit Invoice' : 'Create Invoice'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <Select
                 label="Client"
                 value={formData.clientId}
@@ -272,49 +271,81 @@ export const Invoices: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Line Items</label>
-              <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Line Items</label>
+              <div className="space-y-3 bg-gray-50 dark:bg-gray-900/50 p-3 sm:p-4 rounded-lg">
                 {formData.lineItems.map((item, index) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-2 items-end">
-                    <Input
-                      className="col-span-5"
-                      placeholder="Description"
-                      value={item.description}
-                      onChange={(e) => handleUpdateLineItem(item.id, 'description', e.target.value)}
-                    />
-                    <Input
-                      className="col-span-2"
-                      type="number"
-                      placeholder="Qty"
-                      value={item.quantity}
-                      onChange={(e) => handleUpdateLineItem(item.id, 'quantity', parseFloat(e.target.value))}
-                    />
-                    <Input
-                      className="col-span-3"
-                      type="number"
-                      step="0.01"
-                      placeholder="Price"
-                      value={item.unitPrice}
-                      onChange={(e) => handleUpdateLineItem(item.id, 'unitPrice', parseFloat(e.target.value))}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLineItem(item.id)}
-                      className="col-span-2 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div
+                    key={item.id}
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:border-0 sm:bg-transparent sm:p-0"
+                  >
+                    <div className="flex items-center justify-between mb-3 sm:hidden">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Item {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLineItem(item.id)}
+                        className="rounded-md p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        aria-label={`Remove line item ${index + 1}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-2 sm:items-end">
+                      <div className="sm:col-span-5">
+                        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:hidden">
+                          Description
+                        </p>
+                        <Input
+                          placeholder="Description"
+                          value={item.description}
+                          onChange={(e) => handleUpdateLineItem(item.id, 'description', e.target.value)}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:hidden">
+                          Quantity
+                        </p>
+                        <Input
+                          type="number"
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => handleUpdateLineItem(item.id, 'quantity', parseFloat(e.target.value))}
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:hidden">
+                          Unit Price
+                        </p>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Price"
+                          value={item.unitPrice}
+                          onChange={(e) => handleUpdateLineItem(item.id, 'unitPrice', parseFloat(e.target.value))}
+                        />
+                      </div>
+                      <div className="hidden sm:flex sm:col-span-2 sm:justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLineItem(item.id)}
+                          className="rounded-md p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          aria-label={`Remove line item ${index + 1}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-              <Button type="button" variant="secondary" size="sm" onClick={handleAddLineItem} className="mt-3">
+              <Button type="button" variant="secondary" size="sm" onClick={handleAddLineItem} className="mt-3 w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
                 Add Line Item
               </Button>
             </div>
 
             <div>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Total: {formatCurrency(calculateTotal(), settings?.currency)}
               </p>
             </div>
@@ -338,8 +369,8 @@ export const Invoices: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />
 
-            <div className="flex space-x-2">
-              <Button type="submit">{editingId ? 'Update Invoice' : 'Create Invoice'}</Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Update Invoice' : 'Create Invoice'}</Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -347,6 +378,7 @@ export const Invoices: React.FC = () => {
                   setShowForm(false);
                   setEditingId(null);
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -374,7 +406,73 @@ export const Invoices: React.FC = () => {
       {/* Invoices List */}
       <Card>
         {filteredInvoices.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+            <div className="space-y-3 md:hidden">
+              {filteredInvoices.map((invoice) => {
+                const client = clients.find((c) => c.id === invoice.clientId);
+                const statusVariants = {
+                  draft: 'gray' as const,
+                  sent: 'primary' as const,
+                  paid: 'success' as const,
+                  overdue: 'danger' as const,
+                };
+
+                return (
+                  <div
+                    key={invoice.id}
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-4 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">{invoice.invoiceNumber}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{client?.name || 'Unknown client'}</p>
+                      </div>
+                      <Badge variant={statusVariants[invoice.status]}>
+                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Issue Date</p>
+                        <p className="text-gray-900 dark:text-gray-100">{new Date(invoice.issueDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Due Date</p>
+                        <p className="text-gray-900 dark:text-gray-100">{new Date(invoice.dueDate).toLocaleDateString()}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-gray-500 dark:text-gray-400">Amount</p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                          {formatCurrency(invoice.total, settings?.currency)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleExportPDF(invoice)}
+                        className="inline-flex items-center justify-center gap-2 flex-1 rounded-lg bg-blue-50 dark:bg-blue-900/30 px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                        title="Download PDF"
+                      >
+                        <Download className="w-4 h-4" />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => handleDelete(invoice.id)}
+                        className="inline-flex items-center justify-center gap-2 flex-1 rounded-lg bg-red-50 dark:bg-red-900/30 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -436,7 +534,8 @@ export const Invoices: React.FC = () => {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         ) : (
           <p className="text-gray-500 text-center py-12">No invoices found. Create one to get started!</p>
         )}

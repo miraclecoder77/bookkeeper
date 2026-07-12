@@ -6,13 +6,13 @@ import {
   FileText,
   Users,
   Settings,
-  LogOut,
   Cloud,
   CloudOff,
   Loader,
   AlertCircle,
   Sun,
   Moon,
+  LogOut,
 } from 'lucide-react';
 import { useSyncStatus } from '../hooks/useSyncStatus';
 import { Badge } from './Badge';
@@ -68,68 +68,98 @@ export const Navigation: React.FC<NavigationProps> = ({ onLogout }) => {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">B</span>
+    <>
+      <nav className="sticky top-0 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 gap-3">
+            {/* Logo */}
+            <Link to="/dashboard" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">B</span>
+              </div>
+              <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">Bookkeeper</span>
+            </Link>
+
+            {/* Nav Links */}
+            <div className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 transition-colors ${
+                      isActive(item.path)
+                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
-            <span className="font-bold text-lg text-gray-900 dark:text-gray-150">Bookkeeper</span>
-          </Link>
 
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 transition-colors ${
-                    isActive(item.path)
-                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+            {/* Right side - Sync Status, Theme Toggle & Logout */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="hidden sm:flex items-center space-x-2">
+                {getSyncIcon()}
+                {getSyncBadge()}
+              </div>
+              <div className="flex sm:hidden items-center" title={`Sync status: ${syncStatus.status}`}>
+                {getSyncIcon()}
+              </div>
 
-          {/* Right side - Sync Status, Theme Toggle & Logout */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              {getSyncIcon()}
-              {getSyncBadge()}
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-yellow-500 animate-pulse" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
+              </button>
+
+              <button
+                onClick={onLogout}
+                className="inline-flex items-center gap-1 px-2 sm:px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
             </div>
-            
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-yellow-500 animate-pulse" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </button>
-
-            <button
-              onClick={onLogout}
-              className="inline-flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
           </div>
         </div>
+      </nav>
+
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur">
+        <div className="grid grid-cols-5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-3 text-[11px] font-medium transition-colors ${
+                  active
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-900/20'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/70'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </nav>
+    </>
   );
 };

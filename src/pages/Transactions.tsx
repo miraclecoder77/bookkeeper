@@ -7,7 +7,6 @@ import { Badge } from '../components/Badge';
 import { useTransactions } from '../hooks/useTransactions';
 import { useSettings } from '../hooks/useSettings';
 import { formatCurrency } from '../utils/currency';
-import { Transaction } from '../types';
 import { Plus, Trash2, Download } from 'lucide-react';
 
 export const Transactions: React.FC = () => {
@@ -116,17 +115,17 @@ export const Transactions: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Transactions</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage your income and expenses</p>
         </div>
-        <div className="flex space-x-2">
-          <Button onClick={exportToCSV} variant="secondary" size="sm">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Button onClick={exportToCSV} variant="secondary" size="sm" className="w-full sm:w-auto">
             <Download className="w-4 h-4" />
             Export CSV
           </Button>
-          <Button onClick={() => setShowForm(!showForm)}>
+          <Button onClick={() => setShowForm(!showForm)} className="w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Add Transaction
           </Button>
@@ -176,9 +175,9 @@ export const Transactions: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="What is this transaction for?"
             />
-            <div className="flex space-x-2">
-              <Button type="submit">Add Transaction</Button>
-              <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="submit" className="w-full sm:w-auto">Add Transaction</Button>
+              <Button type="button" variant="secondary" onClick={() => setShowForm(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>
@@ -213,7 +212,53 @@ export const Transactions: React.FC = () => {
       {/* Transactions List */}
       <Card>
         {filteredTransactions.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+            <div className="space-y-3 md:hidden">
+              {filteredTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">{transaction.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(transaction.id)}
+                      className="rounded-md p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      aria-label="Delete transaction"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <Badge variant={transaction.type === 'income' ? 'success' : 'danger'}>
+                      {transaction.type}
+                    </Badge>
+                    <p className={`text-base font-semibold ${transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, settings?.currency)}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Category</p>
+                      <p className="text-gray-900 dark:text-gray-100">{transaction.category}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Date</p>
+                      <p className="text-gray-900 dark:text-gray-100">{new Date(transaction.date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-gray-900 dark:text-gray-100">
               <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
@@ -251,7 +296,8 @@ export const Transactions: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 text-center py-12">No transactions found. Add one to get started!</p>
         )}
