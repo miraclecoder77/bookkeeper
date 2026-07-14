@@ -133,7 +133,6 @@ export const Invoices: React.FC = () => {
 
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
     let yPos = 20;
 
     // Header

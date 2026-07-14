@@ -5,7 +5,7 @@ type SyncCallback = () => Promise<void>;
 
 class SyncManager {
   private syncCallbacks: Map<string, SyncCallback> = new Map();
-  private syncTimers: Map<string, NodeJS.Timeout> = new Map();
+  private syncTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private syncStatus: SyncStatus = {
     status: 'idle',
   };

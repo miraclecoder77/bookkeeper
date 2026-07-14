@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Transaction } from '../types';
 import * as db from '../services/indexeddb';
-import * as drive from '../services/drive';
 import { syncManager } from '../services/syncManager';
 
 const generateId = () => Math.random().toString(36).substring(2, 11);

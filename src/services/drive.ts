@@ -6,12 +6,6 @@ import {
   BusinessSettings,
 } from '../types';
 
-interface FileMetadata {
-  id: string;
-  name: string;
-  mimeType: string;
-}
-
 let appFolderId: string | null = null;
 
 export const initializeDriveConnection = (accessToken: string): void => {
@@ -33,8 +27,10 @@ export const getAppFolderOrCreate = async (): Promise<string> => {
     });
 
     if (response.result.files && response.result.files.length > 0) {
-      appFolderId = response.result.files[0].id;
-      return appFolderId;
+      const id = response.result.files[0].id;
+      if (!id) throw new Error('App folder ID not found in response');
+      appFolderId = id;
+      return id;
     }
 
     // Create app folder if it doesn't exist
@@ -46,8 +42,10 @@ export const getAppFolderOrCreate = async (): Promise<string> => {
       fields: 'id',
     });
 
-    appFolderId = createResponse.result.id;
-    return appFolderId;
+    const id = createResponse.result.id;
+    if (!id) throw new Error('Failed to create app folder');
+    appFolderId = id;
+    return id;
   } catch (error) {
     console.error('Error getting/creating app folder:', error);
     throw error;
@@ -85,7 +83,6 @@ export const uploadFile = async (
     const folderId = await getAppFolderOrCreate();
 
     const fileContent = JSON.stringify(content, null, 2);
-    const blob = new Blob([fileContent], { type: 'application/json' });
 
     if (fileId) {
       // Update existing file

@@ -10,7 +10,7 @@ import { formatCurrency } from '../utils/currency';
 import { Plus, Trash2, Download } from 'lucide-react';
 
 export const Transactions: React.FC = () => {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, filterByType } = useTransactions();
+  const { transactions, addTransaction, deleteTransaction, filterByType } = useTransactions();
   const { settings } = useSettings();
   const [showForm, setShowForm] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');

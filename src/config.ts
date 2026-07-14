@@ -20,7 +20,7 @@ export const STORES = {
   clients: 'clients',
   settings: 'settings',
   user: 'user',
-};
+} as const;
 
 // Sync debounce delay in milliseconds
 export const SYNC_DEBOUNCE_DELAY = 2000;

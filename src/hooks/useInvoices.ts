@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Invoice, LineItem } from '../types';
+import { Invoice } from '../types';
 import * as db from '../services/indexeddb';
 import { syncManager } from '../services/syncManager';
 
