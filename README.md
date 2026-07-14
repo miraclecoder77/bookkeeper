@@ -123,4 +123,4 @@ npm run lint
 
 ## License
 
-This project is available under the MIT License.
+This project is available under the MIT License. Made with love
