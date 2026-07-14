@@ -2,14 +2,72 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bookkeeper - Freelance Accounting App</title>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ─── Primary SEO ─────────────────────────────────────────────── -->
+    <title>Bookkeeper — Freelance Accounting App</title>
+    <meta name="description" content="Bookkeeper is a private, offline-first accounting app for freelancers. Track income, invoice clients, and sync to your own Google Drive. No subscription, no server." />
+    <meta name="keywords" content="freelance accounting, invoicing, income tracker, offline accounting, google drive sync, bookkeeping" />
+    <meta name="author" content="Bookkeeper" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://bookkeeper.app/" />
+
+    <!-- ─── Open Graph ───────────────────────────────────────────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Bookkeeper — Freelance Accounting App" />
+    <meta property="og:description" content="Private, offline-first accounting for freelancers. No subscription. Your data stays in your Google Drive." />
+    <meta property="og:url" content="https://bookkeeper.app/" />
+    <meta property="og:site_name" content="Bookkeeper" />
+
+    <!-- ─── Twitter Card ─────────────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Bookkeeper — Freelance Accounting App" />
+    <meta name="twitter:description" content="Private, offline-first accounting for freelancers. No subscription. Your data stays in your Google Drive." />
+
+    <!-- ─── Theme / PWA ──────────────────────────────────────────────── -->
+    <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Bookkeeper" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- ─── Favicon ──────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg" />
+
+    <!-- ─── Font Preconnect (reduces DNS + TLS time) ─────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- ─── Google Fonts (loaded in CSS via @import — preconnect is enough) -->
+    <!-- Font @imports are in index.css so Vite can tree-shake/cache them -->
+
+    <!-- ─── Inline critical theme guard (avoids FOUC) ────────────────── -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('bookkeeper-theme');
+          if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (_) {}
+      })();
+    </script>
+
+    <!-- ─── Google API scripts — deferred to avoid render-blocking ───── -->
+    <script src="https://apis.google.com/js/api.js" defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- noscript fallback -->
+    <noscript>
+      <div style="font-family:sans-serif;padding:2rem;text-align:center">
+        <h2>Bookkeeper requires JavaScript</h2>
+        <p>Please enable JavaScript in your browser to use Bookkeeper.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

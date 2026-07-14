@@ -6,21 +6,26 @@ import { useTransactions } from '../hooks/useTransactions';
 import { useInvoices } from '../hooks/useInvoices';
 import { useSettings } from '../hooks/useSettings';
 import { formatCurrency } from '../utils/currency';
-import { DollarSign, TrendingUp, Clock } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, ArrowUpRight } from 'lucide-react';
 import { useTheme } from '../components/ThemeProvider';
 
 const StatCard: React.FC<{
   title: string;
   value: string;
   icon: React.ReactNode;
+  iconBg?: string;
   trend?: string;
-}> = ({ title, value, icon, trend }) => (
-  <Card className="flex items-center gap-4">
-    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">{icon}</div>
-    <div className="flex-1">
-      <p className="text-gray-600 dark:text-gray-400 text-sm">{title}</p>
-      <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 break-words">{value}</p>
-      {trend && <p className="text-sm text-green-600 dark:text-green-400">{trend}</p>}
+}> = ({ title, value, icon, iconBg = 'bg-brand-100 dark:bg-brand-900/30', trend }) => (
+  <Card variant="default" className="flex items-center gap-3 sm:gap-4">
+    <div className={`shrink-0 ${iconBg} p-2.5 sm:p-3 rounded-xl`}>{icon}</div>
+    <div className="flex-1 min-w-0">
+      <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm truncate">{title}</p>
+      <p className="text-lg sm:text-2xl font-display font-bold text-slate-900 dark:text-slate-100 truncate">{value}</p>
+      {trend && (
+        <p className="text-xs text-success-600 dark:text-success-400 flex items-center gap-0.5">
+          <ArrowUpRight className="w-3 h-3" />{trend}
+        </p>
+      )}
     </div>
   </Card>
 );
@@ -90,81 +95,92 @@ export const Dashboard: React.FC = () => {
         <p className="text-gray-600 dark:text-gray-400">Welcome back! Here's your financial overview.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid — 2 cols on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Net Income"
           value={formatCurrency(stats.netIncome, settings?.currency)}
-          icon={<DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />}
+          icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-brand-400" />}
+          iconBg="bg-brand-100 dark:bg-brand-900/30"
         />
         <StatCard
-          title="Outstanding Invoices"
+          title="Outstanding"
           value={formatCurrency(stats.outstanding, settings?.currency)}
-          icon={<Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
+          icon={<Clock className="w-5 h-5 sm:w-6 sm:h-6 text-warning-600 dark:text-warning-400" />}
+          iconBg="bg-warning-50 dark:bg-warning-900/20"
         />
         <StatCard
-          title="Overdue Invoices"
+          title="Overdue"
           value={formatCurrency(stats.overdue, settings?.currency)}
-          icon={<TrendingUp className="w-6 h-6 text-red-600 dark:text-red-400" />}
+          icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-danger-600 dark:text-danger-400" />}
+          iconBg="bg-danger-50 dark:bg-danger-900/20"
         />
         <StatCard
           title="Total Income"
           value={formatCurrency(stats.income, settings?.currency)}
-          icon={<DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />}
+          icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-success-600 dark:text-success-400" />}
+          iconBg="bg-success-50 dark:bg-success-900/20"
         />
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Monthly Chart */}
-        <Card className="lg:col-span-2">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Income vs Expenses</h2>
+        <Card variant="default" className="lg:col-span-2">
+          <h2 className="font-display text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+            Income vs Expenses
+          </h2>
           {monthlyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
-                <XAxis dataKey="month" stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
-                <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
-                <Tooltip
-                  contentStyle={theme === 'dark' ? { backgroundColor: '#1f2937', borderColor: '#4b5563', color: '#f3f4f6' } : undefined}
-                />
-                <Legend />
-                <Bar dataKey="income" fill="#10b981" name="Income" />
-                <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="overflow-x-auto -mx-1">
+              <div className="min-w-[320px]">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={monthlyData} margin={{ top: 0, right: 4, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e293b' : '#e2e8f0'} />
+                    <XAxis dataKey="month" stroke={theme === 'dark' ? '#64748b' : '#94a3b8'} tick={{ fontSize: 11 }} />
+                    <YAxis stroke={theme === 'dark' ? '#64748b' : '#94a3b8'} tick={{ fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={
+                        theme === 'dark'
+                          ? { backgroundColor: '#0f172a', borderColor: '#334155', color: '#f1f5f9', borderRadius: '12px' }
+                          : { borderRadius: '12px', borderColor: '#e2e8f0' }
+                      }
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Bar dataKey="income" fill="#22c55e" name="Income" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-12">No transactions yet</p>
+            <p className="text-slate-400 dark:text-slate-500 text-center py-12 text-sm">No transactions yet</p>
           )}
         </Card>
 
         {/* Invoice Status */}
-        <Card>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Invoice Status</h2>
+        <Card variant="default">
+          <h2 className="font-display text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+            Invoice Status
+          </h2>
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 dark:text-gray-300">Draft</span>
-              <Badge variant="gray">{getInvoicesByStatus('draft').length}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 dark:text-gray-300">Sent</span>
-              <Badge variant="primary">{getInvoicesByStatus('sent').length}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 dark:text-gray-300">Paid</span>
-              <Badge variant="success">{getInvoicesByStatus('paid').length}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 dark:text-gray-300">Overdue</span>
-              <Badge variant="danger">{getInvoicesByStatus('overdue').length}</Badge>
-            </div>
+            {[
+              { label: 'Draft',   variant: 'gray'    as const, status: 'draft'   as const },
+              { label: 'Sent',    variant: 'primary' as const, status: 'sent'    as const },
+              { label: 'Paid',    variant: 'success' as const, status: 'paid'    as const },
+              { label: 'Overdue', variant: 'danger'  as const, status: 'overdue' as const },
+            ].map(({ label, variant, status }) => (
+              <div key={label} className="flex justify-between items-center py-1">
+                <span className="text-slate-600 dark:text-slate-300 text-sm">{label}</span>
+                <Badge variant={variant} dot>{getInvoicesByStatus(status).length}</Badge>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
 
       {/* Recent Transactions */}
-      <Card>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Recent Transactions</h2>
+      <Card variant="default">
+        <h2 className="font-display text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Recent Transactions</h2>
         {recentTransactions.length > 0 ? (
           <>
             <div className="space-y-3 md:hidden">
