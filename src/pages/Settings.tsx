@@ -78,7 +78,7 @@ export const Settings: React.FC = () => {
               label="Business Name"
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Your Business Name"
+              placeholder="Enter your business name"
             />
             <Input
               label="Email"
@@ -91,20 +91,20 @@ export const Settings: React.FC = () => {
               label="Phone"
               value={formData.phone || ''}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="(555) 123-4567"
+              placeholder="+234 123 456 7890"
             />
             <Select
               label="Currency"
               value={formData.currency || 'USD'}
               onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
               options={[
+                { value: 'NGN', label: 'NGN (₦)' },
                 { value: 'USD', label: 'USD ($)' },
                 { value: 'EUR', label: 'EUR (€)' },
                 { value: 'GBP', label: 'GBP (£)' },
                 { value: 'CAD', label: 'CAD (C$)' },
                 { value: 'AUD', label: 'AUD (A$)' },
                 { value: 'JPY', label: 'JPY (¥)' },
-                { value: 'NGN', label: 'NGN (₦)' },
               ]}
             />
           </div>
@@ -113,7 +113,7 @@ export const Settings: React.FC = () => {
             label="Address"
             value={formData.address || ''}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            placeholder="123 Main St, Anytown, USA"
+            placeholder="123 Main St, Anytown"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,8 +133,12 @@ export const Settings: React.FC = () => {
             />
           </div>
 
-          <Button type="submit" loading={saving} className="w-full sm:w-auto">
-            <Save className="w-4 h-4" />
+          <Button
+            type="submit"
+            loading={saving}
+            leftIcon={<Save className="w-4 h-4" />}
+            className="w-full sm:w-auto"
+          >
             Save Settings
           </Button>
         </form>

@@ -1,0 +1,406 @@
+{
+  "communities": {
+    "0": [
+      "src_components_badge",
+      "src_components_badge_badge",
+      "src_components_badge_badgeprops",
+      "src_components_button",
+      "src_components_button_button",
+      "src_components_button_buttonprops",
+      "src_components_card",
+      "src_components_card_card",
+      "src_components_card_cardprops",
+      "src_components_input",
+      "src_components_input_input",
+      "src_components_input_inputprops",
+      "src_components_select",
+      "src_components_select_select",
+      "src_components_select_selectoption",
+      "src_components_select_selectprops",
+      "src_hooks_useinvoices_useinvoices",
+      "src_hooks_usesettings",
+      "src_hooks_usesettings_usesettings",
+      "src_hooks_usetransactions_usetransactions",
+      "src_pages_dashboard",
+      "src_pages_dashboard_dashboard",
+      "src_pages_dashboard_statcard",
+      "src_pages_invoices",
+      "src_pages_invoices_invoices",
+      "src_pages_settings",
+      "src_pages_settings_settings",
+      "src_pages_transactions",
+      "src_pages_transactions_transactions",
+      "src_utils_currency",
+      "src_utils_currency_currency_symbols",
+      "src_utils_currency_formatcurrency",
+      "src_utils_currency_getcurrencysymbol"
+    ],
+    "1": [
+      "autoprefixer",
+      "package",
+      "package_devdependencies",
+      "package_devdependencies_autoprefixer",
+      "package_devdependencies_postcss",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_preview",
+      "package_type",
+      "package_version",
+      "postcss",
+      "tailwindcss",
+      "types_react",
+      "types_react_dom",
+      "typescript",
+      "vite",
+      "vitejs_plugin_react"
+    ],
+    "2": [
+      "src_app",
+      "src_app_app",
+      "src_pages_login",
+      "src_pages_login_login",
+      "src_pages_login_loginprops",
+      "src_services_auth",
+      "src_services_auth_fetchuserprofile",
+      "src_services_auth_getcurrentuser",
+      "src_services_auth_initializegoogle",
+      "src_services_auth_isgoogleconfigured",
+      "src_services_auth_isgoogleinitialized",
+      "src_services_auth_loginlocally",
+      "src_services_auth_loginwithgoogle",
+      "src_services_auth_logout",
+      "src_services_auth_window",
+      "src_services_drive_initializedriveconnection",
+      "src_services_indexeddb_deleteuser",
+      "src_services_indexeddb_getuser",
+      "src_services_indexeddb_initdb",
+      "src_services_indexeddb_saveuser"
+    ],
+    "3": [
+      "src_services_indexeddb",
+      "src_services_indexeddb_addclient",
+      "src_services_indexeddb_addinvoice",
+      "src_services_indexeddb_addtransaction",
+      "src_services_indexeddb_clearalldata",
+      "src_services_indexeddb_deleteclient",
+      "src_services_indexeddb_deleteinvoice",
+      "src_services_indexeddb_deletetransaction",
+      "src_services_indexeddb_getallclients",
+      "src_services_indexeddb_getallinvoices",
+      "src_services_indexeddb_getalltransactions",
+      "src_services_indexeddb_getclient",
+      "src_services_indexeddb_getdb",
+      "src_services_indexeddb_getinvoice",
+      "src_services_indexeddb_getsettings",
+      "src_services_indexeddb_gettransaction",
+      "src_services_indexeddb_savesettings",
+      "src_services_indexeddb_updateclient",
+      "src_services_indexeddb_updateinvoice",
+      "src_services_indexeddb_updatetransaction"
+    ],
+    "4": [
+      "src_hooks_useclients",
+      "src_hooks_useclients_generateid",
+      "src_hooks_useclients_useclients",
+      "src_hooks_useinvoices",
+      "src_hooks_useinvoices_generateid",
+      "src_hooks_usetransactions",
+      "src_hooks_usetransactions_generateid",
+      "src_pages_clients",
+      "src_pages_clients_clients",
+      "src_services_indexeddb_bookkeeperdb",
+      "src_services_syncmanager",
+      "src_services_syncmanager_synccallback",
+      "src_types",
+      "src_types_businesssettings",
+      "src_types_client",
+      "src_types_invoice",
+      "src_types_lineitem",
+      "src_types_transaction",
+      "src_types_user"
+    ],
+    "5": [
+      "html2canvas",
+      "idb",
+      "jspdf",
+      "lucide_react",
+      "package_dependencies",
+      "package_dependencies_html2canvas",
+      "package_dependencies_idb",
+      "package_dependencies_jspdf",
+      "package_dependencies_lucide_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_react_router_dom",
+      "package_dependencies_recharts",
+      "react",
+      "react_dom",
+      "react_router_dom",
+      "recharts"
+    ],
+    "6": [
+      "src_config",
+      "src_config_drive_file_names",
+      "src_config_stores",
+      "src_services_drive",
+      "src_services_drive_downloadfile",
+      "src_services_drive_getappfolderorcreate",
+      "src_services_drive_getdrivefileid",
+      "src_services_drive_loadclientsfromserver",
+      "src_services_drive_loadinvoicesfromserver",
+      "src_services_drive_loadsettingsfromserver",
+      "src_services_drive_loadtransactionsfromserver",
+      "src_services_drive_syncclientstoserver",
+      "src_services_drive_syncinvoicestoserver",
+      "src_services_drive_syncsettingstoserver",
+      "src_services_drive_synctransactionstoserver",
+      "src_services_drive_uploadfile"
+    ],
+    "7": [
+      "src_components_navigation",
+      "src_components_navigation_navigation",
+      "src_components_navigation_navigationprops",
+      "src_components_themeprovider",
+      "src_components_themeprovider_theme",
+      "src_components_themeprovider_themecontext",
+      "src_components_themeprovider_themecontexttype",
+      "src_components_themeprovider_themeprovider",
+      "src_components_themeprovider_usetheme",
+      "src_hooks_usesyncstatus",
+      "src_hooks_usesyncstatus_usesyncstatus",
+      "src_main"
+    ],
+    "8": [
+      "src_services_syncmanager_syncmanager",
+      "src_services_syncmanager_syncmanager_cancelall",
+      "src_services_syncmanager_syncmanager_constructor",
+      "src_services_syncmanager_syncmanager_debouncedsync",
+      "src_services_syncmanager_syncmanager_flushofflinequeue",
+      "src_services_syncmanager_syncmanager_getstatus",
+      "src_services_syncmanager_syncmanager_registersync",
+      "src_services_syncmanager_syncmanager_setlocalmode",
+      "src_services_syncmanager_syncmanager_setupnetworklisteners",
+      "src_services_syncmanager_syncmanager_subscribe",
+      "src_services_syncmanager_syncmanager_updatestatus",
+      "src_types_syncstatus"
+    ],
+    "9": [
+      "ref_vite_config_ts",
+      "tsconfig_node",
+      "tsconfig_node_compileroptions",
+      "tsconfig_node_compileroptions_allowsyntheticdefaultimports",
+      "tsconfig_node_compileroptions_composite",
+      "tsconfig_node_compileroptions_module",
+      "tsconfig_node_compileroptions_moduleresolution",
+      "tsconfig_node_compileroptions_skiplibcheck",
+      "tsconfig_node_include"
+    ],
+    "10": [
+      "src_pages_landingpage",
+      "src_pages_landingpage_dashboardpreview",
+      "src_pages_landingpage_featurecard",
+      "src_pages_landingpage_gradientorb",
+      "src_pages_landingpage_landingpage",
+      "src_pages_landingpage_landingpageprops",
+      "src_pages_landingpage_statpill",
+      "src_pages_landingpage_stepcard"
+    ],
+    "11": [
+      "src_vite_env_d",
+      "src_vite_env_d_importmeta",
+      "src_vite_env_d_importmetaenv",
+      "src_vite_env_d_window"
+    ],
+    "12": [
+      "src_components_textarea",
+      "src_components_textarea_textarea",
+      "src_components_textarea_textareaprops"
+    ],
+    "13": [
+      "postcss_config"
+    ],
+    "14": [
+      "tailwind_config"
+    ],
+    "15": [
+      "vite_config_d"
+    ],
+    "16": [
+      "vite_config_js_vite_config"
+    ],
+    "17": [
+      "vite_config_ts_vite_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.1553030303030303,
+    "1": 0.07407407407407407,
+    "2": 0.22631578947368422,
+    "3": 0.19473684210526315,
+    "4": 0.19298245614035087,
+    "5": 0.11764705882352941,
+    "6": 0.2833333333333333,
+    "7": 0.24242424242424243,
+    "8": 0.30303030303030304,
+    "9": 0.2222222222222222,
+    "10": 0.25,
+    "11": 0.5,
+    "12": 0.6666666666666666,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_services_indexeddb_getdb",
+      "label": "getDB()",
+      "degree": 22
+    },
+    {
+      "id": "src_services_syncmanager_syncmanager",
+      "label": "SyncManager",
+      "degree": 18
+    },
+    {
+      "id": "src_services_drive_getdrivefileid",
+      "label": "getDriveFileId()",
+      "degree": 10
+    },
+    {
+      "id": "src_hooks_usesettings_usesettings",
+      "label": "useSettings()",
+      "degree": 9
+    },
+    {
+      "id": "src_utils_currency_formatcurrency",
+      "label": "formatCurrency()",
+      "degree": 8
+    },
+    {
+      "id": "src_pages_dashboard_dashboard",
+      "label": "Dashboard()",
+      "degree": 7
+    },
+    {
+      "id": "src_pages_invoices_invoices",
+      "label": "Invoices()",
+      "degree": 7
+    },
+    {
+      "id": "src_services_auth_loginwithgoogle",
+      "label": "loginWithGoogle()",
+      "degree": 7
+    },
+    {
+      "id": "src_types_syncstatus",
+      "label": "SyncStatus",
+      "degree": 7
+    },
+    {
+      "id": "src_app_app",
+      "label": "App()",
+      "degree": 6
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Invoices()",
+      "target": "jspdf",
+      "source_files": [
+        "src/pages/Invoices.tsx",
+        "package.json"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Navigation()",
+      "target": "Settings()",
+      "source_files": [
+        "src/components/Navigation.tsx",
+        "src/pages/Settings.tsx"
+      ],
+      "confidence": "INFERRED",
+      "relation": "indirect_call",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "Dashboard()",
+      "target": "useTheme()",
+      "source_files": [
+        "src/pages/Dashboard.tsx",
+        "src/components/ThemeProvider.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "Invoices()",
+      "target": "useClients()",
+      "source_files": [
+        "src/pages/Invoices.tsx",
+        "src/hooks/useClients.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "App()",
+      "target": "getCurrentUser()",
+      "source_files": [
+        "src/App.tsx",
+        "src/services/auth.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `dependencies` connect `dependencies` to `devDependencies`?",
+      "why": "High betweenness centrality (0.303) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Invoices()` connect `Invoices.tsx` to `App.tsx`, `types.ts`, `dependencies`?",
+      "why": "High betweenness centrality (0.297) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `jspdf` connect `dependencies` to `Invoices.tsx`?",
+      "why": "High betweenness centrality (0.293) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `private`, `version` to the rest of the system?",
+      "why": "50 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `devDependencies` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07407407407407407 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `dependencies` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

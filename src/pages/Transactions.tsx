@@ -7,14 +7,15 @@ import { Badge } from '../components/Badge';
 import { useTransactions } from '../hooks/useTransactions';
 import { useSettings } from '../hooks/useSettings';
 import { formatCurrency } from '../utils/currency';
-import { Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2, Download, Edit2 } from 'lucide-react';
 
 export const Transactions: React.FC = () => {
-  const { transactions, addTransaction, deleteTransaction, filterByType } = useTransactions();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, filterByType } = useTransactions();
   const { settings } = useSettings();
   const [showForm, setShowForm] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     type: 'income' as 'income' | 'expense',
     amount: '',
@@ -22,6 +23,29 @@ export const Transactions: React.FC = () => {
     description: '',
     date: new Date().toISOString().split('T')[0],
   });
+
+  const handleReset = () => {
+    setEditingId(null);
+    setFormData({
+      type: 'income',
+      amount: '',
+      category: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0],
+    });
+  };
+
+  const handleEditTransaction = (transaction: any) => {
+    setEditingId(transaction.id);
+    setFormData({
+      type: transaction.type,
+      amount: transaction.amount.toString(),
+      category: transaction.category,
+      description: transaction.description,
+      date: transaction.date,
+    });
+    setShowForm(true);
+  };
 
   const categories = {
     income: ['Client Payment', 'Refund', 'Other Income'],
@@ -56,25 +80,31 @@ export const Transactions: React.FC = () => {
     }
 
     try {
-      await addTransaction({
-        type: formData.type,
-        amount: parseFloat(formData.amount),
-        category: formData.category,
-        description: formData.description,
-        date: formData.date,
-      });
+      if (editingId) {
+        await updateTransaction({
+          id: editingId,
+          type: formData.type,
+          amount: parseFloat(formData.amount),
+          category: formData.category,
+          description: formData.description,
+          date: formData.date,
+        });
+        setEditingId(null);
+      } else {
+        await addTransaction({
+          type: formData.type,
+          amount: parseFloat(formData.amount),
+          category: formData.category,
+          description: formData.description,
+          date: formData.date,
+        });
+      }
 
-      setFormData({
-        type: 'income',
-        amount: '',
-        category: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0],
-      });
+      handleReset();
       setShowForm(false);
     } catch (error) {
-      console.error('Error adding transaction:', error);
-      alert('Failed to add transaction');
+      console.error('Error saving transaction:', error);
+      alert('Failed to save transaction');
     }
   };
 
@@ -121,12 +151,20 @@ export const Transactions: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400">Manage your income and expenses</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Button onClick={exportToCSV} variant="secondary" size="sm" className="w-full sm:w-auto">
-            <Download className="w-4 h-4" />
+          <Button
+            onClick={exportToCSV}
+            variant="secondary"
+            size="sm"
+            leftIcon={<Download className="w-4 h-4" />}
+            className="w-full sm:w-auto"
+          >
             Export CSV
           </Button>
-          <Button onClick={() => setShowForm(!showForm)} className="w-full sm:w-auto">
-            <Plus className="w-4 h-4" />
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="w-full sm:w-auto"
+          >
             Add Transaction
           </Button>
         </div>
@@ -135,7 +173,9 @@ export const Transactions: React.FC = () => {
       {/* Add Form */}
       {showForm && (
         <Card>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">New Transaction</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+            {editingId ? 'Edit Transaction' : 'New Transaction'}
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
@@ -176,8 +216,10 @@ export const Transactions: React.FC = () => {
               placeholder="What is this transaction for?"
             />
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button type="submit" className="w-full sm:w-auto">Add Transaction</Button>
-              <Button type="button" variant="secondary" onClick={() => setShowForm(false)} className="w-full sm:w-auto">
+              <Button type="submit" className="w-full sm:w-auto">
+                {editingId ? 'Update Transaction' : 'Add Transaction'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => { setShowForm(false); handleReset(); }} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>
@@ -286,8 +328,16 @@ export const Transactions: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
+                        onClick={() => handleEditTransaction(transaction)}
+                        className="text-yellow-600 hover:text-yellow-700 inline-flex items-center space-x-1 mr-2"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleDelete(transaction.id)}
                         className="text-red-600 hover:text-red-700 inline-flex items-center space-x-1"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

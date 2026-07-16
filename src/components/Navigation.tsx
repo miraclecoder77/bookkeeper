@@ -15,6 +15,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useSyncStatus } from '../hooks/useSyncStatus';
+import { useSettings } from '../hooks/useSettings';
 import { Badge } from './Badge';
 import { useTheme } from './ThemeProvider';
 
@@ -26,6 +27,7 @@ export const Navigation: React.FC<NavigationProps> = ({ onLogout }) => {
   const location = useLocation();
   const syncStatus = useSyncStatus();
   const { theme, toggleTheme } = useTheme();
+  const { settings } = useSettings();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -129,6 +131,21 @@ export const Navigation: React.FC<NavigationProps> = ({ onLogout }) => {
               </button>
 
               {/* Logout */}
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-2 min-h-[40px] px-2 py-1 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Business settings"
+              >
+                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
+                  {settings?.logo ? (
+                    <img src={settings.logo} alt={settings?.name || 'Logo'} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-display font-bold text-slate-700 dark:text-slate-100">{(settings?.name?.[0] || 'B').toUpperCase()}</span>
+                  )}
+                </div>
+                <span className="hidden sm:inline">{settings?.name || 'Business'}</span>
+              </Link>
+
               <button
                 onClick={onLogout}
                 className="inline-flex items-center gap-1.5 min-h-[40px] px-2 sm:px-3 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
