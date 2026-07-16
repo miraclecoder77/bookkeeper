@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -8,9 +9,9 @@ import { Badge } from '../components/Badge';
 import { useInvoices } from '../hooks/useInvoices';
 import { useClients } from '../hooks/useClients';
 import { useSettings } from '../hooks/useSettings';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, formatCurrencyForPDF } from '../utils/currency';
 import { Invoice, LineItem } from '../types';
-import { Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2, Download, Edit2 } from 'lucide-react';
 
 export const Invoices: React.FC = () => {
   const { invoices, addInvoice, updateInvoice, deleteInvoice } = useInvoices();
@@ -19,7 +20,7 @@ export const Invoices: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     clientId: '',
     invoiceNumber: '',
     status: 'draft' as Invoice['status'],
@@ -27,7 +28,27 @@ export const Invoices: React.FC = () => {
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     lineItems: [{ id: '1', description: '', quantity: 1, unitPrice: 0 }],
     notes: '',
-  });
+  };
+  const [formData, setFormData] = useState(initialFormData);
+
+  const handleReset = () => {
+    setEditingId(null);
+    setFormData(initialFormData);
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingId(invoice.id);
+    setFormData({
+      clientId: invoice.clientId,
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      lineItems: invoice.lineItems.map((item) => ({ ...item })),
+      notes: invoice.notes || '',
+    });
+    setShowForm(true);
+  };
 
   const filteredInvoices = useMemo(() => {
     let result = invoices;
@@ -130,93 +151,252 @@ export const Invoices: React.FC = () => {
   const handleExportPDF = async (invoice: Invoice) => {
     const client = clients.find((c) => c.id === invoice.clientId);
     if (!client) return;
-
-    const pdf = new jsPDF();
+    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+    const margin = 40;
     const pageWidth = pdf.internal.pageSize.getWidth();
-    let yPos = 20;
+    let yPos = margin;
 
-    // Header
+    // Attempt HTML-to-canvas rendering first so fonts and currency symbols render exactly
+    // as in the browser (handles symbols like ₦). Fall back to programmatic jsPDF layout
+    // below if rendering fails.
+    try {
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-10000px';
+      container.style.top = '0';
+      container.style.width = '800px';
+      container.style.background = '#ffffff';
+      container.style.color = '#111827';
+      container.style.padding = '24px';
+      container.style.boxSizing = 'border-box';
+      container.style.fontFamily = 'Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif';
+
+      // Build simple HTML invoice for rendering
+      const rowsHtml = invoice.lineItems.map((it) => {
+        const itemTotal = (it.quantity * it.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return `
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${(it.description || '-')}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">${it.quantity}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">${(settings?.currency ? settings.currency.toUpperCase() : 'USD')} ${it.unitPrice.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">${(settings?.currency ? settings.currency.toUpperCase() : 'USD')} ${itemTotal}</td>
+          </tr>`;
+      }).join('\n');
+
+      container.innerHTML = `
+        <div style="max-width:800px;margin:0 auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <div>
+              <div style="font-weight:700;font-size:18px">${settings?.name || ''}</div>
+              <div style="font-size:12px;color:#6b7280">${settings?.email || ''}</div>
+              <div style="font-size:12px;color:#6b7280">${settings?.phone || ''}</div>
+              <div style="font-size:12px;color:#6b7280">${settings?.address || ''}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:22px;font-weight:700">INVOICE</div>
+              <div style="font-size:12px;color:#6b7280">Invoice #: ${invoice.invoiceNumber}</div>
+              <div style="font-size:12px;color:#6b7280">Issue Date: ${new Date(invoice.issueDate).toLocaleDateString()}</div>
+              <div style="font-size:12px;color:#6b7280">Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <div style="font-weight:600;font-size:12px;color:#374151">Bill To</div>
+            <div style="font-size:13px">${client.name}</div>
+            <div style="font-size:12px;color:#6b7280">${client.email}</div>
+            <div style="font-size:12px;color:#6b7280">${client.address || ''}</div>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+            <thead>
+              <tr style="background:#f3f4f6;color:#111827;font-weight:600;">
+                <th style="text-align:left;padding:8px 12px;">Description</th>
+                <th style="text-align:right;padding:8px 12px;">Qty</th>
+                <th style="text-align:right;padding:8px 12px;">Unit</th>
+                <th style="text-align:right;padding:8px 12px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+            <div style="width:320px;border-top:1px solid #e5e7eb;padding-top:12px;">
+              <div style="display:flex;justify-content:space-between;font-weight:700;">
+                <div>Subtotal</div>
+                <div>${(settings?.currency ? settings.currency.toUpperCase() : 'USD')} ${invoice.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(container);
+
+      // Wait briefly for fonts and images to settle
+      await new Promise((res) => setTimeout(res, 200));
+
+      const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+      pdf.setProperties({ title: `Invoice ${invoice.invoiceNumber}` });
+      pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
+
+      // cleanup
+      document.body.removeChild(container);
+      return;
+    } catch (err) {
+      console.warn('HTML-to-canvas PDF export failed, falling back to programmatic PDF layout', err);
+      // continue to existing jsPDF programmatic rendering below
+    }
+
+    // Add logo (if available) - downscale and convert to JPEG for smaller PDFs
+    if (settings?.logo) {
+      try {
+        const img = new Image();
+        img.src = settings.logo;
+        await new Promise((res, rej) => {
+          img.onload = res;
+          img.onerror = rej;
+        });
+
+        const maxLogoWidth = 120;
+        const ratio = img.width / img.height || 1;
+        const imgWidth = Math.min(maxLogoWidth, img.width);
+        const imgHeight = imgWidth / ratio;
+
+        // Convert to JPEG at 0.8 quality to reduce size
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const jpegData = canvas.toDataURL('image/jpeg', 0.8);
+          pdf.addImage(jpegData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+          yPos += imgHeight + 8;
+        }
+      } catch (e) {
+        // image failed to load; continue without logo
+        console.warn('Failed to load logo for PDF export', e);
+      }
+    }
+
+    // Title
     pdf.setFontSize(20);
-    pdf.text('INVOICE', pageWidth - 20, yPos, { align: 'right' });
-    yPos += 15;
+    pdf.setFont(undefined, 'bold');
+    pdf.text('INVOICE', pageWidth - margin, yPos, { align: 'right' });
+    yPos += 24;
 
-    // Business Info
+    // Business Info (left) and Invoice meta (right)
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, 'normal');
+    const leftX = margin;
+    const rightX = pageWidth - margin;
+
     if (settings) {
-      pdf.setFontSize(12);
-      pdf.text(settings.name, 20, yPos);
-      yPos += 6;
-      pdf.setFontSize(10);
-      if (settings.email) pdf.text(`Email: ${settings.email}`, 20, yPos), (yPos += 5);
-      if (settings.phone) pdf.text(`Phone: ${settings.phone}`, 20, yPos), (yPos += 5);
-      if (settings.address) pdf.text(`Address: ${settings.address}`, 20, yPos), (yPos += 5);
+      let infoY = yPos - 6;
+      pdf.text(settings.name || '', leftX, infoY);
+      infoY += 14;
+      if (settings.email) pdf.text(`Email: ${settings.email}`, leftX, infoY), (infoY += 12);
+      if (settings.phone) pdf.text(`Phone: ${settings.phone}`, leftX, infoY), (infoY += 12);
+      if (settings.address) pdf.text(settings.address, leftX, infoY), (infoY += 12);
     }
 
-    yPos += 10;
+    // Invoice meta on the right
+    pdf.text(`Invoice #: ${invoice.invoiceNumber}`, rightX, yPos, { align: 'right' });
+    yPos += 14;
+    pdf.text(`Issue Date: ${new Date(invoice.issueDate).toLocaleDateString()}`, rightX, yPos, { align: 'right' });
+    yPos += 14;
+    pdf.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, rightX, yPos, { align: 'right' });
+    yPos += 18;
 
-    // Invoice Details
-    pdf.setFontSize(10);
-    pdf.text(`Invoice #: ${invoice.invoiceNumber}`, 20, yPos);
-    yPos += 5;
-    pdf.text(`Issue Date: ${new Date(invoice.issueDate).toLocaleDateString()}`, 20, yPos);
-    yPos += 5;
-    pdf.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, 20, yPos);
-    yPos += 10;
-
-    // Client Info
-    pdf.text('BILL TO:', 20, yPos);
-    yPos += 5;
-    pdf.text(client.name, 20, yPos);
-    yPos += 5;
-    pdf.text(client.email, 20, yPos);
-    yPos += 5;
+    // Bill To
+    pdf.setFont(undefined, 'bold');
+    pdf.text('BILL TO:', leftX, yPos);
+    pdf.setFont(undefined, 'normal');
+    yPos += 14;
+    pdf.text(client.name, leftX, yPos);
+    yPos += 14;
+    pdf.text(client.email, leftX, yPos);
+    yPos += 14;
     if (client.address) {
-      pdf.text(client.address, 20, yPos);
-      yPos += 5;
+      pdf.text(client.address, leftX, yPos);
+      yPos += 14;
     }
 
-    yPos += 10;
+    yPos += 6;
 
-    // Line Items Table
-    const tableTop = yPos;
-    const colWidths = { description: 80, quantity: 30, unitPrice: 30, total: 30 };
-    const cellPadding = 5;
+    // Table header
+    const tableX = leftX;
+    const tableWidth = pageWidth - margin * 2;
+    const colDescWidth = tableWidth * 0.55;
+    const colQtyWidth = tableWidth * 0.12;
+    const colUnitWidth = tableWidth * 0.16;
+    const colTotalWidth = tableWidth * 0.17;
 
-    // Header Row
-    pdf.setFillColor(200, 200, 200);
-    pdf.rect(20, tableTop, pageWidth - 40, 7, 'F');
-    pdf.text('Description', 20 + cellPadding, tableTop + 5);
-    pdf.text('Qty', 20 + colWidths.description + cellPadding, tableTop + 5);
-    pdf.text('Unit Price', 20 + colWidths.description + colWidths.quantity + cellPadding, tableTop + 5);
-    pdf.text('Total', 20 + colWidths.description + colWidths.quantity + colWidths.unitPrice + cellPadding, tableTop + 5);
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(tableX, yPos, tableWidth, 22, 'F');
+    pdf.setFont(undefined, 'bold');
+    pdf.setFontSize(10);
+    // Column X/righthand coordinates for aligned numeric values
+    const colDescX = tableX + 6;
+    const colQtyRight = tableX + colDescWidth + colQtyWidth - 6;
+    const colUnitRight = tableX + colDescWidth + colQtyWidth + colUnitWidth - 6;
+    const colTotalRight = tableX + tableWidth - 6;
 
-    yPos = tableTop + 10;
+    pdf.text('Description', colDescX, yPos + 14);
+    pdf.text('Qty', colQtyRight, yPos + 14, { align: 'right' });
+    pdf.text('Unit', colUnitRight, yPos + 14, { align: 'right' });
+    pdf.text('Total', colTotalRight, yPos + 14, { align: 'right' });
+    yPos += 28;
 
-    // Line Items
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(10);
+
+    // Rows
     invoice.lineItems.forEach((item) => {
       const itemTotal = item.quantity * item.unitPrice;
-      pdf.text(item.description, 20 + cellPadding, yPos);
-      pdf.text(item.quantity.toString(), 20 + colWidths.description + cellPadding, yPos);
-      pdf.text(formatCurrency(item.unitPrice, settings?.currency), 20 + colWidths.description + colWidths.quantity + cellPadding, yPos);
-      pdf.text(formatCurrency(itemTotal, settings?.currency), 20 + colWidths.description + colWidths.quantity + colWidths.unitPrice + cellPadding, yPos);
-      yPos += 7;
+      const descLines = pdf.splitTextToSize(item.description || '-', colDescWidth - 10);
+      const rowHeight = Math.max(14, descLines.length * 12);
+
+      // Page break
+      const bottomLimit = pdf.internal.pageSize.getHeight() - margin - 60;
+      if (yPos + rowHeight > bottomLimit) {
+        pdf.addPage();
+        yPos = margin;
+      }
+
+      pdf.text(descLines, colDescX, yPos + 12);
+      pdf.text(String(item.quantity), colQtyRight, yPos + 12, { align: 'right' });
+      pdf.text(formatCurrencyForPDF(item.unitPrice, settings?.currency), colUnitRight, yPos + 12, { align: 'right' });
+      pdf.text(formatCurrencyForPDF(itemTotal, settings?.currency), colTotalRight, yPos + 12, { align: 'right' });
+
+      yPos += rowHeight + 6;
     });
 
-    yPos += 5;
-
-    // Total
+    // Total block
+    const totalY = yPos + 8;
+    pdf.setFont(undefined, 'bold');
     pdf.setFontSize(12);
-    pdf.text(`Total: ${formatCurrency(invoice.total, settings?.currency)}`, pageWidth - 40, yPos, { align: 'right' });
+    pdf.text('Subtotal', tableX + colDescWidth + colQtyWidth + 6, totalY);
+    pdf.text(formatCurrencyForPDF(invoice.total, settings?.currency), colTotalRight, totalY, { align: 'right' });
 
     // Notes
     if (invoice.notes) {
-      yPos += 15;
+      let notesY = totalY + 24;
+      const notesLines = pdf.splitTextToSize(invoice.notes, tableWidth);
+      pdf.setFont(undefined, 'normal');
       pdf.setFontSize(10);
-      pdf.text('Notes:', 20, yPos);
-      yPos += 5;
-      const notesLines = pdf.splitTextToSize(invoice.notes, pageWidth - 40);
-      pdf.text(notesLines, 20, yPos);
+      pdf.text('Notes:', tableX, notesY);
+      notesY += 14;
+      pdf.text(notesLines, tableX, notesY);
     }
 
+    pdf.setProperties({ title: `Invoice ${invoice.invoiceNumber}` });
     pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
   };
 
@@ -228,8 +408,14 @@ export const Invoices: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Invoices</h1>
           <p className="text-gray-600 dark:text-gray-400">Create and manage your invoices</p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4" />
+        <Button
+          onClick={() => {
+            handleReset();
+            setShowForm(!showForm);
+          }}
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="w-full sm:w-auto"
+        >
           New Invoice
         </Button>
       </div>
@@ -337,8 +523,14 @@ export const Invoices: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <Button type="button" variant="secondary" size="sm" onClick={handleAddLineItem} className="mt-3 w-full sm:w-auto">
-                <Plus className="w-4 h-4" />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleAddLineItem}
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="mt-3 w-full sm:w-auto"
+              >
                 Add Line Item
               </Button>
             </div>
@@ -458,6 +650,14 @@ export const Invoices: React.FC = () => {
                         PDF
                       </button>
                       <button
+                        onClick={() => handleEditInvoice(invoice)}
+                        className="inline-flex items-center justify-center gap-2 flex-1 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 px-3 py-2 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/50"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edit
+                      </button>
+                      <button
                         onClick={() => handleDelete(invoice.id)}
                         className="inline-flex items-center justify-center gap-2 flex-1 rounded-lg bg-red-50 dark:bg-red-900/30 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50"
                         title="Delete"
@@ -513,6 +713,13 @@ export const Invoices: React.FC = () => {
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-center space-x-2 flex justify-center">
+                        <button
+                          onClick={() => handleEditInvoice(invoice)}
+                          className="text-yellow-600 hover:text-yellow-700"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleExportPDF(invoice)}
                           className="text-blue-600 hover:text-blue-700"

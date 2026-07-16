@@ -98,9 +98,9 @@ export const Clients: React.FC = () => {
             handleReset();
             setShowForm(!showForm);
           }}
+          leftIcon={<Plus className="w-4 h-4" />}
           className="w-full sm:w-auto"
         >
-          <Plus className="w-4 h-4" />
           Add Client
         </Button>
       </div>
@@ -114,10 +114,10 @@ export const Clients: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                label="Business Name"
+                label="Client Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Acme Inc."
+                placeholder="client name"
               />
               <Input
                 label="Email"
@@ -130,7 +130,7 @@ export const Clients: React.FC = () => {
                 label="Phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="(555) 123-4567"
+                placeholder="+234 123 456 7890"
               />
               <Input
                 label="Tax ID"
@@ -144,7 +144,7 @@ export const Clients: React.FC = () => {
               label="Address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="123 Main St, Anytown, USA"
+              placeholder="123 Main St, Anytown"
             />
 
             <div className="flex flex-col gap-2 sm:flex-row">

@@ -14,7 +14,6 @@ export const useSettings = () => {
         setSettings(
           data || {
             id: 'default',
-            name: 'My Business',
             currency: 'USD',
           }
         );

@@ -5,8 +5,8 @@ import { Badge } from '../components/Badge';
 import { useTransactions } from '../hooks/useTransactions';
 import { useInvoices } from '../hooks/useInvoices';
 import { useSettings } from '../hooks/useSettings';
-import { formatCurrency } from '../utils/currency';
-import { DollarSign, TrendingUp, Clock, ArrowUpRight } from 'lucide-react';
+import { formatCurrency, getCurrencySymbol } from '../utils/currency';
+import { TrendingUp, Clock, ArrowUpRight } from 'lucide-react';
 import { useTheme } from '../components/ThemeProvider';
 
 const StatCard: React.FC<{
@@ -100,7 +100,7 @@ export const Dashboard: React.FC = () => {
         <StatCard
           title="Net Income"
           value={formatCurrency(stats.netIncome, settings?.currency)}
-          icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-brand-400" />}
+          icon={<span className="text-brand-600 dark:text-brand-400 font-semibold text-lg sm:text-xl">{getCurrencySymbol(settings?.currency)}</span>}
           iconBg="bg-brand-100 dark:bg-brand-900/30"
         />
         <StatCard
@@ -118,7 +118,7 @@ export const Dashboard: React.FC = () => {
         <StatCard
           title="Total Income"
           value={formatCurrency(stats.income, settings?.currency)}
-          icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-success-600 dark:text-success-400" />}
+          icon={<span className="text-success-600 dark:text-success-400 font-semibold text-lg sm:text-xl">{getCurrencySymbol(settings?.currency)}</span>}
           iconBg="bg-success-50 dark:bg-success-900/20"
         />
       </div>

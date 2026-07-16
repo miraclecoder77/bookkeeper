@@ -26,7 +26,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none';
+      'inline-flex flex-row flex-nowrap items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none';
 
     const variants: Record<string, string> = {
       primary:
@@ -59,12 +59,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="inline-flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="min-w-0">Loading</span>
+          </span>
         ) : (
-          leftIcon && <span className="shrink-0">{leftIcon}</span>
+          <>
+            {leftIcon && <span className="shrink-0">{leftIcon}</span>}
+            <span className="min-w-0">{children}</span>
+            {rightIcon && <span className="shrink-0">{rightIcon}</span>}
+          </>
         )}
-        <span>{children}</span>
-        {!loading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
       </button>
     );
   }
