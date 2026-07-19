@@ -10,9 +10,9 @@
     "semantic_hash": "5b84f4567208c7c747079c0477373231"
   },
   "src/App.tsx": {
-    "mtime": 1784489500.8001533,
-    "ast_hash": "3fa95e3a202f1f52732ae0cec7fefb45",
-    "semantic_hash": ""
+    "mtime": 1784487050.3595965,
+    "ast_hash": "f0682dc6b987d7e9794bc4233852897b",
+    "semantic_hash": "f0682dc6b987d7e9794bc4233852897b"
   },
   "src/components/Badge.tsx": {
     "mtime": 1784040342.1512198,
@@ -35,9 +35,9 @@
     "semantic_hash": "9477604fc37d437c0f3f66669032e41d"
   },
   "src/components/Navigation.tsx": {
-    "mtime": 1784489489.0645592,
-    "ast_hash": "619a8acd412ee2143d64e0997d1fd9e5",
-    "semantic_hash": ""
+    "mtime": 1784205695.2290368,
+    "ast_hash": "86be36ecd9b802d09f445aeaa5858770",
+    "semantic_hash": "86be36ecd9b802d09f445aeaa5858770"
   },
   "src/components/Select.tsx": {
     "mtime": 1782231964.158846,
@@ -273,15 +273,5 @@
     "mtime": 1784040569.931916,
     "ast_hash": "eebed036cdf310d775ce44409328b8d0",
     "semantic_hash": "eebed036cdf310d775ce44409328b8d0"
-  },
-  "src/pages/Capture.tsx": {
-    "mtime": 1784489467.9715989,
-    "ast_hash": "0e3190c36bbae6d120ee663943f8c32f",
-    "semantic_hash": ""
-  },
-  "src/pages/Insights.tsx": {
-    "mtime": 1784489453.7587,
-    "ast_hash": "e816e58377cc7d1cd54a7b01ff93a3c2",
-    "semantic_hash": ""
   }
 }

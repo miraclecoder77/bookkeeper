@@ -1,0 +1,10 @@
+C:\Users\user\Documents\bookkeeper\.agents\rules\graphify.md
+C:\Users\user\Documents\bookkeeper\.agents\workflows\graphify.md
+C:\Users\user\Documents\bookkeeper\.github\copilot-instructions.md
+C:\Users\user\Documents\bookkeeper\.github\workflows\netlify.yml
+C:\Users\user\Documents\bookkeeper\ARCHITECTURE.md
+C:\Users\user\Documents\bookkeeper\QUICKSTART.md
+C:\Users\user\Documents\bookkeeper\README.md
+C:\Users\user\Documents\bookkeeper\SETUP.md
+C:\Users\user\Documents\bookkeeper\index.html
+C:\Users\user\Documents\bookkeeper\public\favicon.svg

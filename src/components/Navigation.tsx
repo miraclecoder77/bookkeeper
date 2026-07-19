@@ -13,6 +13,8 @@ import {
   Sun,
   Moon,
   LogOut,
+  Sparkles,
+  Camera,
 } from 'lucide-react';
 import { useSyncStatus } from '../hooks/useSyncStatus';
 import { useSettings } from '../hooks/useSettings';
@@ -36,6 +38,8 @@ export const Navigation: React.FC<NavigationProps> = ({ onLogout }) => {
     { path: '/transactions', label: 'Transactions',  icon: ArrowUpDown },
     { path: '/invoices',     label: 'Invoices',      icon: FileText },
     { path: '/clients',      label: 'Clients',       icon: Users },
+    { path: '/capture',      label: 'OCR Capture',    icon: Camera },
+    { path: '/insights',     label: 'AI Insights',   icon: Sparkles },
     { path: '/settings',     label: 'Settings',      icon: Settings },
   ];
 
