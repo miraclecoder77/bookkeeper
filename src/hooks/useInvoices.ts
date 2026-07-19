@@ -1,102 +1,55 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Invoice } from '../types';
-import * as db from '../services/indexeddb';
-import { syncManager } from '../services/syncManager';
-
-const generateId = () => Math.random().toString(36).substring(2, 11);
+import { Invoice, InvoiceLineItem } from '../types';
+import * as dal from '../services/dal';
 
 export const useInvoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadInvoices = useCallback(async () => {
+    setLoading(true);
+    const res = await dal.invoices.list();
+    if (res.ok && res.data) {
+      setInvoices(res.data);
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
-    const loadInvoices = async () => {
-      try {
-        const data = await db.getAllInvoices();
-        setInvoices(data);
-      } catch (error) {
-        console.error('Error loading invoices:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadInvoices();
-  }, []);
+  }, [loadInvoices]);
 
-  const addInvoice = useCallback(
-    async (invoice: Omit<Invoice, 'id'>) => {
-      const newInvoice: Invoice = {
-        ...invoice,
-        id: generateId(),
-      };
-
-      try {
-        await db.addInvoice(newInvoice);
-        setInvoices((prev) => [...prev, newInvoice]);
-        syncManager.debouncedSync('invoices');
-        return newInvoice;
-      } catch (error) {
-        console.error('Error adding invoice:', error);
-        throw error;
-      }
-    },
-    []
-  );
-
-  const updateInvoice = useCallback(async (invoice: Invoice) => {
-    try {
-      await db.updateInvoice(invoice);
-      setInvoices((prev) =>
-        prev.map((i) => (i.id === invoice.id ? invoice : i))
-      );
-      syncManager.debouncedSync('invoices');
-    } catch (error) {
-      console.error('Error updating invoice:', error);
-      throw error;
+  const addInvoice = useCallback(async (payload: Parameters<typeof dal.invoices.create>[0]) => {
+    const res = await dal.invoices.create(payload);
+    if (res.ok && res.data) {
+      setInvoices(prev => [res.data!, ...prev]);
+      return res.data;
     }
+    return null;
   }, []);
 
-  const deleteInvoice = useCallback(async (id: string) => {
-    try {
-      await db.deleteInvoice(id);
-      setInvoices((prev) => prev.filter((i) => i.id !== id));
-      syncManager.debouncedSync('invoices');
-    } catch (error) {
-      console.error('Error deleting invoice:', error);
-      throw error;
+  const updateInvoice = useCallback(async (id: string, patch: Partial<Invoice> & { lineItems?: InvoiceLineItem[] }) => {
+    const res = await dal.invoices.update(id, patch);
+    if (res.ok && res.data) {
+      setInvoices(prev => prev.map(i => i.id === id ? res.data! : i));
     }
+    return res;
   }, []);
 
-  const getInvoicesByStatus = useCallback(
-    (status: Invoice['status']) => {
-      return invoices.filter((i) => i.status === status);
-    },
-    [invoices]
-  );
-
-  const getInvoicesByClient = useCallback(
-    (clientId: string) => {
-      return invoices.filter((i) => i.clientId === clientId);
-    },
-    [invoices]
-  );
-
-  const calculateTotalByStatus = useCallback(
-    (status: Invoice['status']) => {
-      return getInvoicesByStatus(status).reduce((sum, i) => sum + i.total, 0);
-    },
-    [getInvoicesByStatus]
-  );
+  const recordPayment = useCallback(async (id: string, payment: { amount: number; date: string; method: string }) => {
+    const res = await dal.invoices.recordPayment(id, payment);
+    if (res.ok && res.data) {
+      setInvoices(prev => prev.map(i => i.id === id ? res.data! : i));
+    }
+    return res;
+  }, []);
 
   return {
     invoices,
     loading,
     addInvoice,
     updateInvoice,
-    deleteInvoice,
-    getInvoicesByStatus,
-    getInvoicesByClient,
-    calculateTotalByStatus,
+    recordPayment,
+    reloadInvoices: loadInvoices,
   };
 };
