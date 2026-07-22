@@ -1,204 +1,289 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  ArrowUpDown,
+  ArrowLeftRight,
   FileText,
   Users,
-  Settings,
+  Settings2,
   Cloud,
-  CloudOff,
-  Loader2,
-  AlertCircle,
+  WifiOff,
   Sun,
   Moon,
-  LogOut,
   Sparkles,
-  Camera,
 } from 'lucide-react';
 import { useSyncStatus } from '../hooks/useSyncStatus';
-import { useSettings } from '../hooks/useSettings';
-import { Badge } from './Badge';
 import { useTheme } from './ThemeProvider';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface NavigationProps {
   onLogout: () => void;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ onLogout }) => {
-  const location = useLocation();
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const NAV_ITEMS: NavItem[] = [
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/activity',  label: 'Activity',  icon: ArrowLeftRight  },
+  { path: '/invoices',  label: 'Invoices',  icon: FileText        },
+  { path: '/clients',   label: 'Clients',   icon: Users           },
+  { path: '/settings',  label: 'Settings',  icon: Settings2       },
+];
+
+const TAB_COUNT = NAV_ITEMS.length; // 5
+
+// ─── Helper: resolve active tab index ────────────────────────────────────────
+
+function resolveActiveIndex(pathname: string): number {
+  const idx = NAV_ITEMS.findIndex((item) => pathname === item.path);
+  // Fallback: match prefix (e.g. /invoices/new → invoices tab)
+  if (idx !== -1) return idx;
+  const prefix = NAV_ITEMS.findIndex((item) => pathname.startsWith(item.path + '/'));
+  return prefix !== -1 ? prefix : 0;
+}
+
+// ─── Sub-component: Sync Indicator (header right) ────────────────────────────
+
+const SyncDot: React.FC<{ status: string }> = ({ status }) => {
+  const isOffline = status === 'offline' || status === 'error';
+
+  if (isOffline) {
+    return (
+      <span
+        className="relative flex items-center justify-center w-5 h-5"
+        aria-label="Offline"
+      >
+        <WifiOff className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+      </span>
+    );
+  }
+
+  // Synced / syncing → pulsing green dot
+  return (
+    <span className="relative flex h-2 w-2" aria-label="Synced">
+      {/* Ping layer */}
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+      {/* Solid core */}
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+    </span>
+  );
+};
+
+// ─── Sub-component: Sync Detail (header left, hidden on mobile) ──────────────
+
+const SyncDetail: React.FC<{ status: string }> = ({ status }) => {
+  const isOffline = status === 'offline' || status === 'error';
+
+  return (
+    <span className="hidden sm:flex items-center gap-1">
+      <Cloud
+        className={`w-3 h-3 ${isOffline ? 'text-amber-500' : 'text-green-500'}`}
+        aria-hidden="true"
+      />
+      <span
+        className={`text-[11px] font-medium leading-none ${
+          isOffline
+            ? 'text-amber-500 dark:text-amber-400'
+            : 'text-green-500 dark:text-green-400'
+        }`}
+      >
+        {isOffline ? (status === 'error' ? 'Sync Error' : 'Offline') : 'Synced · Drive'}
+      </span>
+    </span>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export const Navigation: React.FC<NavigationProps> = ({ onLogout: _onLogout }) => {
+  const location   = useLocation();
   const syncStatus = useSyncStatus();
   const { theme, toggleTheme } = useTheme();
-  const { settings } = useSettings();
 
-  const isActive = (path: string) => location.pathname === path;
+  const activeIndex = resolveActiveIndex(location.pathname);
 
-  const navItems = [
-    { path: '/dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
-    { path: '/transactions', label: 'Transactions',  icon: ArrowUpDown },
-    { path: '/invoices',     label: 'Invoices',      icon: FileText },
-    { path: '/clients',      label: 'Clients',       icon: Users },
-    { path: '/capture',      label: 'OCR Capture',    icon: Camera },
-    { path: '/insights',     label: 'AI Insights',   icon: Sparkles },
-    { path: '/settings',     label: 'Settings',      icon: Settings },
-  ];
+  // ── Indicator spring position ──────────────────────────────────────────────
+  // The CSS class `.nav-indicator` already carries the spring transition on
+  // its `left` property (transition: left 320ms var(--ease-spring)).
+  // We compute the `left` as the centre of the active tab column.
+  // Each tab occupies (100 / TAB_COUNT)% of the bottom bar width.
+  // Centre of active tab = (activeIndex + 0.5) / TAB_COUNT * 100%
+  // The translateX(-50%) baked into `.nav-indicator` centres the 32px pill.
+  const indicatorLeftPct = `${((activeIndex + 0.5) / TAB_COUNT) * 100}%`;
 
-  const getSyncIcon = () => {
-    switch (syncStatus.status) {
-      case 'syncing':
-        return <Loader2 className="w-4 h-4 animate-spin text-brand-500 dark:text-brand-400" />;
-      case 'offline':
-        return <CloudOff className="w-4 h-4 text-warning-500 dark:text-warning-400" />;
-      case 'error':
-        return <AlertCircle className="w-4 h-4 text-danger-500 dark:text-danger-400" />;
-      case 'local':
-        return <CloudOff className="w-4 h-4 text-slate-400 dark:text-slate-500" />;
-      default:
-        return <Cloud className="w-4 h-4 text-success-500 dark:text-success-400" />;
+  // Prevent the indicator from animating on first paint (mount flash)
+  const [mounted, setMounted] = useState(false);
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      const id = requestAnimationFrame(() => setMounted(true));
+      return () => cancelAnimationFrame(id);
     }
-  };
+  }, []);
 
-  const getSyncBadge = () => {
-    switch (syncStatus.status) {
-      case 'syncing': return <Badge variant="primary" dot>Syncing…</Badge>;
-      case 'offline': return <Badge variant="warning" dot>Offline</Badge>;
-      case 'error':   return <Badge variant="danger"  dot>Sync Error</Badge>;
-      case 'local':   return <Badge variant="gray"    dot>Local Mode</Badge>;
-      default:        return <Badge variant="success" dot>Synced</Badge>;
-    }
-  };
+  const syncStatusValue =
+    (syncStatus as { status?: string })?.status ?? 'synced';
 
   return (
     <>
-      {/* ── Top Navigation Bar ──────────────────────────────────────── */}
-      <nav className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/60 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-4">
+      {/* ════════════════════════════════════════════════════════════════════
+          TOP HEADER — fixed, z-40, 56px, glass-header
+          ════════════════════════════════════════════════════════════════════ */}
+      <header
+        className="glass-header fixed inset-x-0 top-0 z-40 flex items-center"
+        style={{ height: '56px' }}
+        role="banner"
+      >
+        <div className="w-full max-w-screen-2xl mx-auto px-4 flex items-center justify-between">
 
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
-              <div className="w-8 h-8 bg-gradient-brand rounded-xl flex items-center justify-center shadow-sm shadow-brand-600/25">
-                <span className="text-white font-display font-bold text-sm">B</span>
-              </div>
-              <span className="font-display font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100">
-                Bookkeeper
+          {/* ── LEFT: Brand mark + wordmark + sync detail ── */}
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2.5 min-w-0"
+            aria-label="Bookkeeper home"
+          >
+            {/* 'B' gradient mark — 36×36, rounded-xl */}
+            <span
+              className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%)',
+                boxShadow: '0 2px 10px rgba(99,102,241,0.35)',
+              }}
+              aria-hidden="true"
+            >
+              <span
+                className="text-white font-bold text-base leading-none select-none"
+                style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
+              >
+                B
               </span>
-            </Link>
+            </span>
 
-            {/* Desktop Nav Links */}
-            <div className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`px-3 py-2 rounded-xl text-sm font-medium flex items-center gap-1.5 transition-all duration-150 ${
-                      active
-                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 font-semibold'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <Icon className={`w-4 h-4 ${active ? 'text-brand-600 dark:text-brand-400' : ''}`} />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {/* Wordmark */}
+            <span
+              className="font-bold text-[15px] leading-none text-slate-900 dark:text-slate-100 select-none"
+              style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
+            >
+              Bookkeeper
+            </span>
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              {/* Sync status — full badge on desktop, icon-only on mobile */}
-              <div className="hidden sm:flex items-center gap-2">
-                {getSyncIcon()}
-                {getSyncBadge()}
-              </div>
-              <div
-                className="flex sm:hidden items-center"
-                title={`Sync: ${syncStatus.status}`}
-              >
-                {getSyncIcon()}
-              </div>
+            {/* Sync detail — hidden on mobile, visible sm+ */}
+            <SyncDetail status={syncStatusValue} />
+          </Link>
 
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="w-4 h-4 text-yellow-400" />
-                ) : (
-                  <Moon className="w-4 h-4" />
-                )}
-              </button>
+          {/* ── RIGHT: Sync dot + theme toggle ── */}
+          <div className="flex items-center gap-2">
 
-              {/* Logout */}
-              <Link
-                to="/settings"
-                className="inline-flex items-center gap-2 min-h-[40px] px-2 py-1 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="Business settings"
-              >
-                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
-                  {settings?.logo ? (
-                    <img src={settings.logo} alt={settings?.name || 'Logo'} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-display font-bold text-slate-700 dark:text-slate-100">{(settings?.name?.[0] || 'B').toUpperCase()}</span>
-                  )}
-                </div>
-                <span className="hidden sm:inline">{settings?.name || 'Business'}</span>
-              </Link>
+            {/* Pulsing sync dot */}
+            <SyncDot status={syncStatusValue} />
 
-              <button
-                onClick={onLogout}
-                className="inline-flex items-center gap-1.5 min-h-[40px] px-2 sm:px-3 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-            </div>
+            {/* Theme toggle — 44×44 minimum touch target */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className={[
+                'relative flex items-center justify-center',
+                'w-11 h-11 rounded-xl',
+                'text-slate-600 dark:text-slate-300',
+                'hover:bg-slate-100 dark:hover:bg-white/[0.06]',
+                'focus-visible:ring-2 focus-visible:ring-indigo-500',
+                'transition-colors duration-200',
+              ].join(' ')}
+            >
+              {theme === 'dark' ? (
+                <Sun
+                  className="w-[18px] h-[18px] text-amber-400"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Moon
+                  className="w-[18px] h-[18px] text-slate-600"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          BOTTOM NAV — fixed, z-40, glass-nav, safe-area aware
+          ════════════════════════════════════════════════════════════════════ */}
+      <nav
+        className="glass-nav fixed inset-x-0 bottom-0 z-40"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
+        aria-label="Main navigation"
+      >
+        {/* Wrapper is `relative` so the absolute indicator positions against it */}
+        <div className="relative">
+
+          {/* ── Shared spring indicator pill ── */}
+          {/* Uses the .nav-indicator CSS class from index.css which handles:
+              - position: absolute; top: 0; height: 3px; width: 32px
+              - border-radius: 0 0 4px 4px
+              - indigo gradient background
+              - transition: left 320ms var(--ease-spring)
+              - transform: translateX(-50%) to centre on left anchor          */}
+          <span
+            aria-hidden="true"
+            className="nav-indicator"
+            style={{
+              left: indicatorLeftPct,
+              // Suppress spring on first render to avoid 0→activeTab flash
+              transition: mounted ? undefined : 'none',
+            }}
+          />
+
+          {/* ── Tab items ── */}
+          <div className="grid grid-cols-5">
+            {NAV_ITEMS.map((item, i) => {
+              const Icon     = item.icon;
+              const isActive = i === activeIndex;
+
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={[
+                    // Layout
+                    'relative flex flex-col items-center justify-center gap-[3px]',
+                    'min-h-[56px] px-1 py-2',
+                    // Typography
+                    'text-[10px] font-semibold leading-none',
+                    // Smooth colour transition
+                    'transition-all duration-300',
+                    // Active / inactive colour
+                    isActive
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-slate-500 dark:text-slate-400',
+                    'select-none',
+                  ].join(' ')}
+                >
+                  <Icon
+                    className={[
+                      'w-5 h-5',
+                      'transition-all duration-300',
+                      isActive ? 'scale-[1.12]' : 'scale-100',
+                    ].join(' ')}
+                    aria-hidden="true"
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </nav>
-
-      {/* ── Mobile Bottom Tab Bar ─────────────────────────────────────── */}
-      <div
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 dark:border-slate-700/60 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
-      >
-        <div className="grid grid-cols-5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`relative flex flex-col items-center justify-center gap-1 py-3 px-1 min-h-[56px] text-[10px] font-semibold transition-all duration-200 ${
-                  active
-                    ? 'text-brand-600 dark:text-brand-400'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {/* Active indicator pill */}
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full bg-brand-600 dark:bg-brand-400"
-                  />
-                )}
-                <Icon
-                  className={`w-5 h-5 transition-transform duration-200 ${active ? 'scale-110' : ''}`}
-                />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
     </>
   );
 };

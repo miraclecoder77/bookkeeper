@@ -3,15 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { initDB } from './services/indexeddb';
 import * as dal from './services/dal';
 import { Navigation } from './components/Navigation';
+import { ThemeProvider } from './components/ThemeProvider';
 import { LandingPage } from './pages/LandingPage';
 import { Onboarding } from './pages/Onboarding';
 import { Dashboard } from './pages/Dashboard';
-import { Transactions } from './pages/Transactions';
+import { Activity } from './pages/Activity';
 import { Invoices } from './pages/Invoices';
 import { Clients } from './pages/Clients';
 import { Settings } from './pages/Settings';
-import { Insights } from './pages/Insights';
-import { Capture } from './pages/Capture';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
@@ -91,12 +90,12 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
         <div className="text-center">
-          <div className="w-14 h-14 bg-gradient-to-tr from-brand-600 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-600/30 animate-pulse">
+          <div className="w-14 h-14 bg-brand-gradient rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-brand animate-pulse">
             <span className="text-white font-display font-bold text-2xl">B</span>
           </div>
-          <p className="text-slate-400 text-sm">Loading Bookkeeper…</p>
+          <p className="font-sans text-slate-400 text-sm">Loading Bookkeeper…</p>
         </div>
       </div>
     );
@@ -104,20 +103,22 @@ const App: React.FC = () => {
 
   if (wiped) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="text-center max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
-          <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-red-500">
-            ⚠
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
+        <div className="text-center w-full max-w-md bg-surface border border-default rounded-2xl p-8 shadow-elevated">
+          <div className="w-12 h-12 bg-expense/10 border border-expense/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-expense">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
           </div>
-          <h1 className="text-xl font-bold text-white mb-2">Remote Erase Executed</h1>
-          <p className="text-slate-400 text-sm mb-6">
+          <h1 className="text-xl font-display font-bold text-primary mb-2">Remote Erase Executed</h1>
+          <p className="text-secondary text-sm mb-6">
             All database tables, cached financial documents, and session keys have been erased successfully.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold transition-colors"
+            className="btn btn-primary w-full"
           >
-            Start Fresh Onboarding
+            Start Fresh
           </button>
         </div>
       </div>
@@ -126,12 +127,17 @@ const App: React.FC = () => {
 
   if (initError) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="text-center max-w-sm">
-          <p className="text-red-400 mb-4">{initError}</p>
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
+        <div className="text-center max-w-sm w-full">
+          <div className="w-12 h-12 bg-expense/10 border border-expense/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-expense">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-expense mb-4 font-sans">{initError}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-5 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-semibold transition-colors"
+            className="btn btn-ghost"
           >
             Refresh Page
           </button>
@@ -143,30 +149,37 @@ const App: React.FC = () => {
   // If user is not onboarded, default to landing page.
   // Clicking "Get Started" on the landing page will set showOnboarding to true.
   if (needsOnboarding) {
-    if (showOnboarding) {
-      return <Onboarding onComplete={handleOnboardingComplete} />;
-    }
-    return <LandingPage onGetStarted={() => setShowOnboarding(true)} />;
+    return (
+      <ThemeProvider>
+        {showOnboarding ? (
+          <Onboarding onComplete={handleOnboardingComplete} />
+        ) : (
+          <LandingPage onGetStarted={() => setShowOnboarding(true)} />
+        )}
+      </ThemeProvider>
+    );
   }
 
   return (
-    <Router>
-      <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 md:pb-0">
-        <Navigation onLogout={handleLogout} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <Routes>
-            <Route path="/dashboard"    element={<Dashboard />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/invoices"     element={<Invoices />} />
-            <Route path="/clients"      element={<Clients />} />
-            <Route path="/capture"      element={<Capture />} />
-            <Route path="/insights"     element={<Insights />} />
-            <Route path="/settings"     element={<Settings />} />
-            <Route path="*"             element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen bg-canvas">
+          <Navigation onLogout={handleLogout} />
+          <main className="pt-14 pb-[72px] max-w-[448px] mx-auto px-4" style={{ maxWidth: 'min(448px, 100%)' }}>
+            <div className="py-4">
+              <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/activity"  element={<Activity />} />
+                <Route path="/invoices"  element={<Invoices />} />
+                <Route path="/clients"   element={<Clients />} />
+                <Route path="/settings"  element={<Settings />} />
+                <Route path="*"          element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 };
 
