@@ -74,7 +74,7 @@ export const Activity: React.FC = () => {
   const hasResults = Object.keys(groupedTransactions).length > 0;
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6 pb-6 max-w-4xl mx-auto">
       {/* 1. HEADER SECTION */}
       <div className="flex items-center justify-between">
         <div>

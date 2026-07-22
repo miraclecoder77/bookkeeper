@@ -36,7 +36,7 @@ export const Settings: React.FC = () => {
   const email = profile?.email || (name.toLowerCase().split(' ')[0] + '@northstar.design');
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6 pb-6 max-w-3xl mx-auto">
       {/* 1. HEADER */}
       <div>
         <p className="text-secondary text-[12px] font-bold uppercase tracking-widest mb-1">
