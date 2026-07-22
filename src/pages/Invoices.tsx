@@ -1,514 +1,268 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import jsPDF from 'jspdf';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { Select } from '../components/Select';
-import { Badge } from '../components/Badge';
+import React, { useState, useMemo } from 'react';
 import { useInvoices } from '../hooks/useInvoices';
 import { useClients } from '../hooks/useClients';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { Money } from '../components/Money';
-import { getDB } from '../services/indexeddb';
-import { Invoice, InvoiceLineItem, Client } from '../types';
-import { Plus, Trash2, Download, CheckCircle } from 'lucide-react';
+import {
+  FilePlus2, Search, ChevronRight, MoreHorizontal,
+  Clock, CheckCircle2, AlertCircle, FileText, X
+} from 'lucide-react';
+
+type TabType = 'All' | 'Open' | 'Paid';
 
 export const Invoices: React.FC = () => {
-  const { invoices, addInvoice, updateInvoice, recordPayment } = useInvoices();
+  const { invoices } = useInvoices();
   const { clients } = useClients();
   const { profile } = useUserProfile();
-  
-  const [showForm, setShowForm] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue'>('all');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  const [showPaymentModal, setShowPaymentModal] = useState<string | null>(null);
-  const [paymentAmountDecimal, setPaymentAmountDecimal] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
 
-  const defaultCurrency = profile?.invoicingCurrency || 'NGN';
-  const defaultTaxRate = profile?.jurisdiction === 'NG' ? 7.5 : 0; // Nigeria standard VAT is 7.5%
+  const [activeTab, setActiveTab] = useState<TabType>('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const initialFormData = {
-    clientId: '',
-    invoiceNumber: '',
-    status: 'draft' as Invoice['status'],
-    issueDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    currency: defaultCurrency,
-    lineItems: [
-      {
-        description: '',
-        quantity: 1,
-        unitPriceDecimal: '',
-        taxRate: defaultTaxRate,
-      }
-    ],
-    notes: '',
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
-
-  useEffect(() => {
-    if (profile) {
-      setFormData(f => ({ ...f, currency: profile.invoicingCurrency }));
-    }
-  }, [profile]);
-
-  const handleReset = () => {
-    setEditingId(null);
-    setFormData({
-      ...initialFormData,
-      currency: profile?.invoicingCurrency || 'NGN',
-    });
-  };
-
-  const handleEditInvoice = async (invoice: Invoice) => {
-    try {
-      const db = getDB();
-      const allItems = await db.getAll('invoiceLineItems');
-      const invoiceItems = allItems.filter(item => item.invoiceId === invoice.id);
-      
-      setEditingId(invoice.id);
-      setFormData({
-        clientId: invoice.clientId,
-        invoiceNumber: invoice.invoiceNumber,
-        status: invoice.status,
-        issueDate: invoice.issueDate,
-        dueDate: invoice.dueDate,
-        currency: invoice.currency,
-        notes: invoice.notes || '',
-        lineItems: invoiceItems.map(item => ({
-          description: item.description,
-          quantity: item.quantity,
-          unitPriceDecimal: (item.unitPriceMinorUnits / 100).toString(),
-          taxRate: item.taxRate,
-        })),
-      });
-      setShowForm(true);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const filteredInvoices = useMemo(() => {
-    let result = invoices;
-    if (filterStatus !== 'all') {
-      result = result.filter((i) => i.status === filterStatus);
-    }
-    return [...result].sort((a, b) => b.issueDate.localeCompare(a.issueDate));
-  }, [invoices, filterStatus]);
-
-  const handleAddLineItem = () => {
-    setFormData({
-      ...formData,
-      lineItems: [...formData.lineItems, { description: '', quantity: 1, unitPriceDecimal: '', taxRate: defaultTaxRate }],
-    });
-  };
-
-  const handleRemoveLineItem = (index: number) => {
-    setFormData({
-      ...formData,
-      lineItems: formData.lineItems.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleUpdateLineItem = (index: number, field: string, value: any) => {
-    setFormData({
-      ...formData,
-      lineItems: formData.lineItems.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.clientId || !formData.invoiceNumber || formData.lineItems.length === 0) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    const preparedLineItems = formData.lineItems.map((item, idx) => {
-      const price = parseFloat(item.unitPriceDecimal) || 0;
-      return {
-        description: item.description || 'Line Item',
-        quantity: Number(item.quantity) || 1,
-        unitPriceMinorUnits: Math.round(price * 100),
-        taxRate: Number(item.taxRate) || 0,
-        sortOrder: idx,
-      };
-    });
-
-    try {
-      if (editingId) {
-        await updateInvoice(editingId, {
-          clientId: formData.clientId,
-          invoiceNumber: formData.invoiceNumber,
-          status: formData.status,
-          issueDate: formData.issueDate,
-          dueDate: formData.dueDate,
-          currency: formData.currency,
-          notes: formData.notes,
-          lineItems: preparedLineItems as any,
-        });
-      } else {
-        await addInvoice({
-          clientId: formData.clientId,
-          invoiceNumber: formData.invoiceNumber,
-          issueDate: formData.issueDate,
-          dueDate: formData.dueDate,
-          currency: formData.currency,
-          notes: formData.notes,
-          lineItems: preparedLineItems,
-        });
-      }
-
-      handleReset();
-      setShowForm(false);
-    } catch (error) {
-      console.error('Error saving invoice:', error);
-      alert('Failed to save invoice');
-    }
-  };
-
-  const handleRecordPaymentSubmit = async () => {
-    if (!showPaymentModal) return;
-    const amt = parseFloat(paymentAmountDecimal);
-    if (isNaN(amt) || amt <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-
-    const amount = Math.round(amt * 100);
-    const res = await recordPayment(showPaymentModal, {
-      amount,
-      date: new Date().toISOString().split('T')[0],
-      method: paymentMethod,
-    });
-
-    if (res.ok) {
-      alert('Payment recorded and linked to transaction logs.');
-      setShowPaymentModal(null);
-      setPaymentAmountDecimal('');
-    } else {
-      alert('Failed to record payment');
-    }
-  };
+  const currency = profile?.baseCurrency || 'GBP';
 
   const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c])), [clients]);
 
-  // Simple PDF generator fallback
-  const handleExportPDF = (invoice: Invoice) => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`INVOICE #${invoice.invoiceNumber}`, 20, 20);
-    doc.setFontSize(11);
-    doc.text(`Issue Date: ${invoice.issueDate}`, 20, 30);
-    doc.text(`Due Date: ${invoice.dueDate}`, 20, 36);
-    doc.text(`Status: ${invoice.status.toUpperCase()}`, 20, 42);
-    doc.text(`Total Due: ${invoice.currency} ${(invoice.totalMinorUnits / 100).toFixed(2)}`, 20, 52);
-    if (invoice.notes) {
-      doc.text(`Notes: ${invoice.notes}`, 20, 70);
+  // Combined data (hook + static fallback if empty)
+  const allInvoices = useMemo(() => {
+    if (invoices.length > 0) {
+      return invoices.map(inv => {
+        const client = clientMap.get(inv.clientId);
+        return {
+          id: inv.id,
+          clientName: client?.name || 'Unknown Client',
+          number: inv.invoiceNumber,
+          description: inv.notes || 'Invoice',
+          amountMinorUnits: inv.totalMinorUnits,
+          dueDate: inv.dueDate,
+          status: inv.status, // draft, sent, paid, overdue, cancelled
+        };
+      });
     }
-    doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
+
+    return [
+      { id: '1', clientName: 'Northstar Studio', number: 'INV-046', description: 'Brand system — Phase 2', amountMinorUnits: 240000, dueDate: '2026-04-24', status: 'sent' }, // Due soon
+      { id: '2', clientName: 'Acme Corp', number: 'INV-045', description: 'Product design retainer', amountMinorUnits: 125000, dueDate: '2026-04-17', status: 'overdue' },
+      { id: '3', clientName: 'Nova Labs', number: 'INV-044', description: 'UX audit & roadmap', amountMinorUnits: 340000, dueDate: '2026-04-15', status: 'paid' },
+      { id: '4', clientName: 'Formfield', number: 'INV-043', description: 'Research workshop', amountMinorUnits: 98000, dueDate: '', status: 'draft' },
+    ];
+  }, [invoices, clientMap]);
+
+  // Stats
+  const openCount = allInvoices.filter(i => i.status === 'sent' || i.status === 'overdue').length;
+  const paidCount = allInvoices.filter(i => i.status === 'paid').length;
+  
+  const totalBilled = allInvoices.reduce((sum, i) => sum + i.amountMinorUnits, 0);
+  const totalPaid = allInvoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amountMinorUnits, 0);
+  const totalOutstanding = allInvoices.filter(i => i.status === 'sent' || i.status === 'overdue').reduce((sum, i) => sum + i.amountMinorUnits, 0);
+  
+  const progressPct = totalBilled > 0 ? (totalPaid / totalBilled) * 100 : 0;
+
+  // Filtered list
+  const filteredInvoices = useMemo(() => {
+    let list = allInvoices;
+
+    if (activeTab === 'Open') {
+      list = list.filter(i => i.status === 'sent' || i.status === 'overdue');
+    } else if (activeTab === 'Paid') {
+      list = list.filter(i => i.status === 'paid');
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(i => 
+        i.clientName.toLowerCase().includes(q) || 
+        i.number.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort by due date if possible, otherwise keep order
+    list.sort((a, b) => {
+      if (a.status === 'paid' && b.status !== 'paid') return 1;
+      if (a.status !== 'paid' && b.status === 'paid') return -1;
+      return new Date(a.dueDate || 0).getTime() - new Date(b.dueDate || 0).getTime();
+    });
+
+    return list;
+  }, [allInvoices, activeTab, searchQuery]);
+
+  const getClientColor = (name: string) => {
+    if (name.includes('Acme')) return 'bg-indigo-500/20 text-indigo-500';
+    if (name.includes('Nova')) return 'bg-violet-500/20 text-violet-500';
+    if (name.includes('Northstar')) return 'bg-amber-500/20 text-amber-500';
+    return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
+  };
+
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  const formatStatus = (status: string, dueDate: string) => {
+    if (status === 'overdue') return { label: 'Overdue', color: 'bg-expense/15 text-expense' };
+    if (status === 'paid') return { label: 'Paid', color: 'bg-income/15 text-income' };
+    if (status === 'draft') return { label: 'Draft', color: 'bg-slate-100 dark:bg-slate-800 text-slate-500' };
+    
+    // Status is 'sent', check due date
+    return { label: 'Due soon', color: 'bg-outstanding/15 text-outstanding' };
   };
 
   return (
-    <div className="space-y-6 text-slate-200">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between font-display">
+    <div className="space-y-6 pb-6">
+      {/* 1. HEADER */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Invoice Manager</h1>
-          <p className="text-slate-400 text-sm">Issue and track client invoices</p>
+          <p className="text-secondary text-[12px] font-bold uppercase tracking-widest mb-1">
+            Keep cash moving
+          </p>
+          <h1 className="font-display font-bold text-2xl text-primary">Invoices</h1>
         </div>
-        <Button
-          onClick={() => {
-            handleReset();
-            setShowForm(!showForm);
-          }}
-          leftIcon={<Plus className="w-4 h-4" />}
-          className="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white"
-        >
-          Add Invoice
-        </Button>
+        <button className="btn btn-primary h-11 px-4 shadow-brand text-sm gap-1.5">
+          <FilePlus2 className="w-4 h-4" />
+          New
+        </button>
       </div>
 
-      {showForm && (
-        <Card className="bg-slate-900 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4">
-            {editingId ? 'Edit Invoice' : 'Create Invoice'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                label="Client (Required)"
-                value={formData.clientId}
-                onChange={(e) => {
-                  const client = clientMap.get(e.target.value);
-                  setFormData({
-                    ...formData,
-                    clientId: e.target.value,
-                    currency: client?.defaultCurrency || defaultCurrency,
-                  });
-                }}
-                options={clients.map((c) => ({ value: c.id, label: c.name }))}
-                placeholder="Select a client"
-                required
-              />
-              <Input
-                label="Invoice Number"
-                value={formData.invoiceNumber}
-                onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-                placeholder="e.g. INV-2026-001"
-                required
-              />
-              <Input
-                label="Issue Date"
-                type="date"
-                value={formData.issueDate}
-                onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
-                required
-              />
-              <Input
-                label="Due Date"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                required
-              />
-              <Select
-                label="Currency"
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                options={[
-                  { value: 'NGN', label: 'NGN (₦)' },
-                  { value: 'USD', label: 'USD ($)' },
-                  { value: 'GBP', label: 'GBP (£)' },
-                  { value: 'EUR', label: 'EUR (€)' },
-                  { value: 'GHS', label: 'GHS (₵)' },
-                  { value: 'KES', label: 'KES (KSh)' },
-                ]}
-              />
-              <Select
-                label="Status"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                options={[
-                  { value: 'draft', label: 'Draft' },
-                  { value: 'sent', label: 'Sent' },
-                  { value: 'paid', label: 'Paid' },
-                  { value: 'partially_paid', label: 'Partially Paid' },
-                  { value: 'overdue', label: 'Overdue' },
-                  { value: 'void', label: 'Void' },
-                ]}
-              />
-            </div>
-
-            <div className="space-y-3 pt-3">
-              <h3 className="font-semibold text-white">Line Items</h3>
-              {formData.lineItems.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-3 items-end">
-                  <div className="col-span-5">
-                    <Input
-                      label="Description"
-                      value={item.description}
-                      onChange={(e) => handleUpdateLineItem(idx, 'description', e.target.value)}
-                      placeholder="e.g. Design consulting"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      label="Qty"
-                      type="number"
-                      value={item.quantity.toString()}
-                      onChange={(e) => handleUpdateLineItem(idx, 'quantity', Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <Input
-                      label="Unit Price"
-                      type="number"
-                      value={item.unitPriceDecimal}
-                      onChange={(e) => handleUpdateLineItem(idx, 'unitPriceDecimal', e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="col-span-2 flex justify-center pb-1">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLineItem(idx)}
-                      className="p-2.5 text-red-400 border border-slate-800 rounded-xl hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <Button type="button" onClick={handleAddLineItem} className="bg-slate-800 hover:bg-slate-700 text-xs">
-                Add Item Row
-              </Button>
-            </div>
-
-            <Input
-              label="Notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Payment terms, bank details, etc."
+      {/* 2. OUTSTANDING SUMMARY CARD */}
+      <div className="bg-surface rounded-2xl p-5 shadow-card border-y border-r border-l-4 border-default border-l-outstanding">
+        <p className="text-secondary text-sm font-semibold mb-1">Outstanding this month</p>
+        <div className="font-display font-bold text-[32px] leading-tight text-outstanding mb-1">
+          <Money amountMinorUnits={invoices.length ? totalOutstanding : 365000} currency={currency} />
+        </div>
+        <p className="text-secondary text-xs font-medium mb-4">
+          {invoices.length ? openCount : 3} awaiting payment
+        </p>
+        
+        <div className="space-y-2">
+          <div className="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden flex">
+            <div 
+              className="h-full bg-indigo-500 rounded-full" 
+              style={{ width: `${invoices.length ? progressPct : 70}%` }} 
             />
+          </div>
+          <p className="text-secondary text-xs">
+            <Money amountMinorUnits={invoices.length ? totalPaid : 870000} currency={currency} /> paid of <Money amountMinorUnits={invoices.length ? totalBilled : 1235000} currency={currency} /> billed
+          </p>
+        </div>
+      </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row pt-2">
-              <Button type="submit" className="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white">
-                Save Invoice
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setShowForm(false);
-                  handleReset();
-                }}
-                className="w-full sm:w-auto bg-slate-800 text-slate-300 hover:bg-slate-700"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      {/* Filters */}
-      <Card className="bg-slate-900 border border-slate-800">
-        <Select
-          label="Filter by Status"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as any)}
-          options={[
-            { value: 'all', label: 'All Invoices' },
-            { value: 'draft', label: 'Draft' },
-            { value: 'sent', label: 'Sent' },
-            { value: 'paid', label: 'Paid' },
-            { value: 'overdue', label: 'Overdue' },
-          ]}
+      {/* 3. SEARCH FIELD */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="w-5 h-5 text-secondary" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by client or invoice"
+          className="field w-full pl-10 pr-10"
         />
-      </Card>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-secondary hover:text-primary"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
-      {/* Invoices List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredInvoices.map((inv) => {
-          const client = clientMap.get(inv.clientId);
+      {/* 4. TABS */}
+      <div className="flex border-b border-default overflow-x-auto no-scrollbar">
+        {(['All', 'Open', 'Paid'] as TabType[]).map(tab => {
+          const isActive = activeTab === tab;
+          let count = 0;
+          if (tab === 'All') count = allInvoices.length;
+          if (tab === 'Open') count = openCount;
+          if (tab === 'Paid') count = paidCount;
+
           return (
-            <Card key={inv.id} className="bg-slate-900 border border-slate-800 p-5 space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-white font-display">Invoice #{inv.invoiceNumber}</h3>
-                  <p className="text-xs text-slate-400">{client ? client.name : 'Unknown Client'}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Badge
-                    variant={
-                      inv.status === 'paid'
-                        ? 'success'
-                        : inv.status === 'overdue'
-                        ? 'danger'
-                        : inv.status === 'sent'
-                        ? 'primary'
-                        : 'gray'
-                    }
-                  >
-                    {inv.status}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-sm text-slate-300">
-                <div>
-                  <p className="text-slate-500 text-xs">Issue / Due</p>
-                  <p className="text-xs">{inv.issueDate} / {inv.dueDate}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-slate-500 text-xs">Total Amount</p>
-                  <p className="font-semibold text-white text-base">
-                    <Money amountMinorUnits={inv.totalMinorUnits} currency={inv.currency} />
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 justify-end border-t border-slate-800/80 pt-3">
-                {inv.status !== 'paid' && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setShowPaymentModal(inv.id);
-                      setPaymentAmountDecimal(((inv.totalMinorUnits - inv.amountPaidMinorUnits) / 100).toString());
-                    }}
-                    leftIcon={<CheckCircle className="w-3.5 h-3.5" />}
-                    className="bg-green-600 hover:bg-green-500 text-white text-xs"
-                  >
-                    Record Payment
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  onClick={() => handleEditInvoice(inv)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleExportPDF(inv)}
-                  leftIcon={<Download className="w-3.5 h-3.5" />}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"
-                >
-                  PDF
-                </Button>
-              </div>
-            </Card>
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`relative px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-2 ${
+                isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-secondary hover:text-primary'
+              }`}
+            >
+              {tab}
+              <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                isActive ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' : 'bg-surface-2 text-secondary'
+              }`}>
+                {count}
+              </span>
+              {isActive && (
+                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-indigo-600 dark:bg-indigo-500 rounded-t-full" />
+              )}
+            </button>
           );
         })}
       </div>
 
-      {/* Record Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 max-w-sm w-full p-6 rounded-2xl space-y-4 shadow-2xl">
-            <h3 className="font-bold text-white text-lg">Record Invoice Payment</h3>
-            <Input
-              label="Amount Paid"
-              type="number"
-              value={paymentAmountDecimal}
-              onChange={(e) => setPaymentAmountDecimal(e.target.value)}
-            />
-            <Select
-              label="Payment Channel"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              options={[
-                { value: 'bank_transfer', label: 'Bank Transfer' },
-                { value: 'mobile_money', label: 'Mobile Money' },
-                { value: 'cash', label: 'Cash' },
-                { value: 'card', label: 'Card' },
-              ]}
-            />
-            <div className="flex gap-2 justify-end pt-2">
-              <Button
-                onClick={() => setShowPaymentModal(null)}
-                className="bg-slate-800 text-slate-300 hover:bg-slate-700"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRecordPaymentSubmit}
-                className="bg-brand-600 text-white hover:bg-brand-500"
-              >
-                Record Payment
-              </Button>
-            </div>
+      {/* 5. INVOICE CARDS */}
+      {filteredInvoices.length > 0 ? (
+        <div className="space-y-2">
+          {filteredInvoices.map((inv) => {
+            const statusInfo = formatStatus(inv.status, inv.dueDate);
+            return (
+              <div key={inv.id} className="bg-surface rounded-2xl p-4 border border-default shadow-sm flex flex-col sm:flex-row sm:items-center gap-4 transition-colors">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${getClientColor(inv.clientName)}`}>
+                    {getInitials(inv.clientName)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm text-primary truncate">{inv.clientName}</p>
+                    <p className="text-xs text-secondary truncate">{inv.number} · {inv.description}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                  <div className="font-display font-bold text-lg text-primary">
+                    <Money amountMinorUnits={inv.amountMinorUnits} currency={currency} />
+                  </div>
+                  
+                  <div className="flex flex-col items-end gap-1">
+                    <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </div>
+                    {inv.dueDate && (
+                      <span className="text-[10px] text-secondary font-medium">
+                        {inv.status === 'paid' ? 'Paid on' : 'Due'} {new Date(inv.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 border-l border-default pl-4 shrink-0">
+                    <button className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                      View <span aria-hidden="true">→</span>
+                    </button>
+                    <button className="p-2 -mr-2 rounded-full text-secondary hover:bg-surface-2 hover:text-primary transition-colors">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* EMPTY STATE */
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center mb-4 text-secondary">
+            <FileText className="w-8 h-8" />
           </div>
+          <h3 className="font-display font-bold text-lg text-primary mb-1">No invoices found</h3>
+          <p className="text-sm text-secondary mb-6">Create your first invoice or adjust filters.</p>
+          {(searchQuery || activeTab !== 'All') && (
+            <button 
+              onClick={() => { setActiveTab('All'); setSearchQuery(''); }}
+              className="btn btn-ghost"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 };
-export default Invoices;

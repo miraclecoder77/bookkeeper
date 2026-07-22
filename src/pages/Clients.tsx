@@ -1,318 +1,220 @@
 import React, { useState, useMemo } from 'react';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { Select } from '../components/Select';
 import { useClients } from '../hooks/useClients';
-import { Client } from '../types';
-import { Plus, Archive, Edit2 } from 'lucide-react';
+import { useInvoices } from '../hooks/useInvoices';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { Money } from '../components/Money';
+import { Search, Plus, ChevronRight, Users, X } from 'lucide-react';
 
 export const Clients: React.FC = () => {
-  const { clients, addClient, updateClient, archiveClient } = useClients();
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const { clients } = useClients();
+  const { invoices } = useInvoices();
+  const { profile } = useUserProfile();
   
-  const [formData, setFormData] = useState({
-    name: '',
-    companyName: '',
-    email: '',
-    phone: '',
-    billingAddress: '',
-    defaultCurrency: 'NGN',
-    defaultPaymentTermsDays: 14,
-    taxId: '',
-    notes: '',
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const currency = profile?.baseCurrency || 'GBP';
 
-  const handleReset = () => {
-    setFormData({
-      name: '',
-      companyName: '',
-      email: '',
-      phone: '',
-      billingAddress: '',
-      defaultCurrency: 'NGN',
-      defaultPaymentTermsDays: 14,
-      taxId: '',
-      notes: '',
-    });
-    setEditingId(null);
-  };
+  // Compute combined data
+  const clientData = useMemo(() => {
+    if (clients.length > 0) {
+      return clients.map(client => {
+        const clientInvoices = invoices.filter(i => i.clientId === client.id);
+        const totalBilled = clientInvoices.reduce((sum, i) => sum + i.totalMinorUnits, 0);
+        const totalPaid = clientInvoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amountPaidMinorUnits, 0);
+        const openBalance = totalBilled - totalPaid;
+        const draftBalance = clientInvoices.filter(i => i.status === 'draft').reduce((sum, i) => sum + i.totalMinorUnits, 0);
+        
+        let statusText = 'All settled';
+        let statusType = 'settled';
+        let balanceMinorUnits = 0;
 
+        if (openBalance > 0) {
+          statusText = 'due';
+          statusType = 'due';
+          balanceMinorUnits = openBalance;
+        } else if (draftBalance > 0) {
+          statusText = 'draft';
+          statusType = 'draft';
+          balanceMinorUnits = draftBalance;
+        }
+
+        return {
+          id: client.id,
+          name: client.name,
+          contactName: client.contactName || '',
+          activitySummary: clientInvoices.length > 0 ? `${clientInvoices.length} invoices` : 'No activity',
+          totalMinorUnits: totalBilled,
+          balanceMinorUnits,
+          statusText,
+          statusType
+        };
+      });
+    }
+
+    return [
+      { id: '1', name: 'Acme Corp', contactName: 'Maya Chen', activitySummary: 'Invoice sent yesterday', totalMinorUnits: 1280000, balanceMinorUnits: 125000, statusText: 'due', statusType: 'due' },
+      { id: '2', name: 'Nova Labs', contactName: 'Andre Valdez', activitySummary: 'Paid invoice today', totalMinorUnits: 960000, balanceMinorUnits: 0, statusText: 'All settled', statusType: 'settled' },
+      { id: '3', name: 'Northstar Studio', contactName: 'Robin Park', activitySummary: 'Active project', totalMinorUnits: 640000, balanceMinorUnits: 240000, statusText: 'due', statusType: 'due' },
+      { id: '4', name: 'Formfield', contactName: 'Devon Baker', activitySummary: 'No activity this month', totalMinorUnits: 215000, balanceMinorUnits: 98000, statusText: 'draft', statusType: 'draft' },
+    ];
+  }, [clients, invoices]);
+
+  // Filters
   const filteredClients = useMemo(() => {
-    if (!searchTerm) return clients;
-    const lower = searchTerm.toLowerCase();
-    return clients.filter(
-      c => c.name.toLowerCase().includes(lower) || 
-           (c.email && c.email.toLowerCase().includes(lower)) ||
-           (c.companyName && c.companyName.toLowerCase().includes(lower))
-    );
-  }, [clients, searchTerm]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.email) {
-      alert('Client name and email are required');
-      return;
+    let list = clientData;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(c => 
+        c.name.toLowerCase().includes(q) || 
+        c.contactName.toLowerCase().includes(q)
+      );
     }
+    return list;
+  }, [clientData, searchQuery]);
 
-    try {
-      if (editingId) {
-        await updateClient(editingId, {
-          name: formData.name,
-          companyName: formData.companyName,
-          email: formData.email,
-          phone: formData.phone,
-          billingAddress: formData.billingAddress,
-          defaultCurrency: formData.defaultCurrency,
-          defaultPaymentTermsDays: Number(formData.defaultPaymentTermsDays),
-          taxId: formData.taxId,
-          notes: formData.notes,
-        });
-      } else {
-        await addClient({
-          name: formData.name,
-          companyName: formData.companyName,
-          email: formData.email,
-          phone: formData.phone,
-          billingAddress: formData.billingAddress,
-          defaultCurrency: formData.defaultCurrency,
-          defaultPaymentTermsDays: Number(formData.defaultPaymentTermsDays),
-          taxId: formData.taxId,
-          notes: formData.notes,
-        });
-      }
+  // Stats
+  const activeClientsCount = clients.length || 12;
+  const totalOpenBalances = clientData.filter(c => c.statusType === 'due').reduce((sum, c) => sum + c.balanceMinorUnits, 0);
 
-      handleReset();
-      setShowForm(false);
-    } catch (error) {
-      console.error('Error saving client:', error);
-      alert('Failed to save client');
-    }
+  const getClientColor = (name: string) => {
+    if (name.includes('Acme')) return 'bg-indigo-500/20 text-indigo-500';
+    if (name.includes('Nova')) return 'bg-violet-500/20 text-violet-500';
+    if (name.includes('Northstar')) return 'bg-amber-500/20 text-amber-500';
+    return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
   };
 
-  const handleEdit = (client: Client) => {
-    setFormData({
-      name: client.name,
-      companyName: client.companyName || '',
-      email: client.email,
-      phone: client.phone || '',
-      billingAddress: client.billingAddress || '',
-      defaultCurrency: client.defaultCurrency || 'NGN',
-      defaultPaymentTermsDays: client.defaultPaymentTermsDays || 14,
-      taxId: client.taxId || '',
-      notes: client.notes || '',
-    });
-    setEditingId(client.id);
-    setShowForm(true);
-  };
-
-  const handleArchive = async (id: string) => {
-    if (window.confirm('Are you sure you want to archive this client? They will be hidden from default listings.')) {
-      try {
-        await archiveClient(id);
-      } catch (error) {
-        console.error('Error archiving client:', error);
-        alert('Failed to archive client');
-      }
-    }
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="space-y-6 pb-6">
+      {/* 1. HEADER */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white font-display">Client Directory</h1>
-          <p className="text-slate-400 text-sm">Add, update, and manage billing profiles</p>
+          <p className="text-secondary text-[12px] font-bold uppercase tracking-widest mb-1">
+            Relationships that pay
+          </p>
+          <h1 className="font-display font-bold text-2xl text-primary">Clients</h1>
         </div>
-        <Button
-          onClick={() => {
-            handleReset();
-            setShowForm(!showForm);
-          }}
-          leftIcon={<Plus className="w-4 h-4" />}
-          className="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white"
-        >
-          Add Client
-        </Button>
+        <button className="btn btn-ghost h-11 px-4 text-sm gap-1.5 border border-default shadow-sm bg-surface-2">
+          <Plus className="w-4 h-4" />
+          Add
+        </button>
       </div>
 
-      {/* Form */}
-      {showForm && (
-        <Card className="bg-slate-900 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4">
-            {editingId ? 'Edit Client Profile' : 'Create Client Profile'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Client Name (Required)"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Chinua Achebe"
-                required
-              />
-              <Input
-                label="Company Name (Optional)"
-                value={formData.companyName}
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                placeholder="e.g. Glo Telecom"
-              />
-              <Input
-                label="Email Address (Required)"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="e.g. client@domain.com"
-                required
-              />
-              <Input
-                label="Phone Number"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="e.g. +234 803 123 4567"
-              />
-              <Select
-                label="Default Invoice Currency"
-                value={formData.defaultCurrency}
-                onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
-                options={[
-                  { value: 'NGN', label: 'NGN (₦)' },
-                  { value: 'USD', label: 'USD ($)' },
-                  { value: 'GBP', label: 'GBP (£)' },
-                  { value: 'EUR', label: 'EUR (€)' },
-                  { value: 'GHS', label: 'GHS (₵)' },
-                  { value: 'KES', label: 'KES (KSh)' },
-                ]}
-              />
-              <Input
-                label="Default Payment Terms (Days)"
-                type="number"
-                value={formData.defaultPaymentTermsDays.toString()}
-                onChange={(e) => setFormData({ ...formData, defaultPaymentTermsDays: Number(e.target.value) })}
-              />
-              <Input
-                label="Tax Identification / VAT ID"
-                value={formData.taxId}
-                onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                placeholder="Tax Reference"
-              />
-            </div>
+      {/* 2. SUMMARY CARDS */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
+          <p className="text-secondary text-xs font-semibold mb-1">Active clients</p>
+          <div className="font-display font-bold text-2xl text-primary">
+            {activeClientsCount}
+          </div>
+        </div>
+        <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
+          <p className="text-secondary text-xs font-semibold mb-1">Open balances</p>
+          <div className="font-display font-bold text-2xl text-outstanding">
+            <Money amountMinorUnits={totalOpenBalances} currency={currency} />
+          </div>
+        </div>
+      </div>
 
-            <Input
-              label="Billing Address"
-              value={formData.billingAddress}
-              onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
-              placeholder="Full street and state address"
-            />
-
-            <Input
-              label="Notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="e.g. Prefers payments via bank transfer"
-            />
-
-            <div className="flex flex-col gap-2 sm:flex-row pt-2">
-              <Button type="submit" className="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white">
-                {editingId ? 'Update Client' : 'Add Client'}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setShowForm(false);
-                  handleReset();
-                }}
-                className="w-full sm:w-auto bg-slate-800 text-slate-300 hover:bg-slate-700"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      {/* Search */}
-      <Card className="bg-slate-900 border border-slate-800">
-        <Input
-          label="Search Ledger Clients"
-          placeholder="Filter by name, email, or company..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      {/* 3. SEARCH FIELD */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="w-5 h-5 text-secondary" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search clients"
+          className="field w-full pl-10 pr-10 bg-surface-2"
         />
-      </Card>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-secondary hover:text-primary"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
-      {/* Clients List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* 4. CLIENT LIST */}
+      <div>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <span className="text-secondary text-[12px] font-bold uppercase tracking-widest">
+            All Clients
+          </span>
+          <span className="text-secondary text-xs font-medium">
+            {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
+          </span>
+        </div>
+
         {filteredClients.length > 0 ? (
-          filteredClients.map((client) => (
-            <Card key={client.id} className="relative bg-slate-900 border border-slate-800 p-5">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg font-bold text-white pr-3 break-words font-display">{client.name}</h3>
-                  {client.companyName && <p className="text-xs text-slate-400 font-semibold">{client.companyName}</p>}
+          <div className="bg-surface rounded-2xl border border-default shadow-card overflow-hidden">
+            {filteredClients.map((client, idx) => {
+              const isLast = idx === filteredClients.length - 1;
+              return (
+                <div 
+                  key={client.id}
+                  className={`min-h-[72px] flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-2 transition-colors ${
+                    !isLast ? 'border-b border-default' : ''
+                  }`}
+                >
+                  <div className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${getClientColor(client.name)}`}>
+                    {getInitials(client.name)}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-primary truncate">{client.name}</p>
+                    <p className="text-xs text-secondary truncate">
+                      {client.contactName} {client.contactName && '·'} {client.activitySummary}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <p className="text-[10px] text-secondary font-medium mb-0.5">
+                        Total: <Money amountMinorUnits={client.totalMinorUnits} currency={currency} />
+                      </p>
+                      {client.statusType === 'settled' ? (
+                        <p className="text-xs font-bold text-income">{client.statusText}</p>
+                      ) : (
+                        <p className={`text-xs font-bold flex items-center justify-end gap-1 ${
+                          client.statusType === 'due' ? 'text-outstanding' : 'text-slate-500'
+                        }`}>
+                          <Money amountMinorUnits={client.balanceMinorUnits} currency={currency} /> {client.statusText}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-secondary" />
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEdit(client)}
-                    className="text-yellow-500 hover:text-yellow-400"
-                    title="Edit"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleArchive(client.id)}
-                    className="text-slate-400 hover:text-red-400"
-                    title="Archive"
-                  >
-                    <Archive className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm text-slate-300 pt-1 border-t border-slate-800">
-                {client.email && (
-                  <p className="flex justify-between">
-                    <span className="text-slate-500">Email:</span>
-                    <a href={`mailto:${client.email}`} className="text-brand-400 hover:underline break-all">
-                      {client.email}
-                    </a>
-                  </p>
-                )}
-                {client.phone && (
-                  <p className="flex justify-between">
-                    <span className="text-slate-500">Phone:</span>
-                    <span>{client.phone}</span>
-                  </p>
-                )}
-                {client.defaultCurrency && (
-                  <p className="flex justify-between">
-                    <span className="text-slate-500">Currency:</span>
-                    <span className="font-semibold text-slate-200">{client.defaultCurrency}</span>
-                  </p>
-                )}
-                {client.defaultPaymentTermsDays && (
-                  <p className="flex justify-between">
-                    <span className="text-slate-500">Terms:</span>
-                    <span>{client.defaultPaymentTermsDays} Days</span>
-                  </p>
-                )}
-              </div>
-            </Card>
-          ))
+              );
+            })}
+          </div>
         ) : (
-          <Card className="col-span-full bg-slate-900 border border-slate-800">
-            <p className="text-slate-500 text-center py-12">
-              {searchTerm ? 'No matches found.' : 'No active clients. Add one to get started.'}
-            </p>
-          </Card>
+          /* EMPTY STATE */
+          <div className="flex flex-col items-center justify-center py-16 text-center bg-surface border border-default rounded-2xl shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center mb-4 text-secondary">
+              <Users className="w-8 h-8" />
+            </div>
+            <h3 className="font-display font-bold text-lg text-primary mb-1">No clients found</h3>
+            <p className="text-sm text-secondary mb-6">Add a client or adjust your search.</p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="btn btn-ghost"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 };
-export default Clients;
