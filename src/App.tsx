@@ -165,7 +165,7 @@ const App: React.FC = () => {
       <Router>
         <div className="min-h-screen bg-canvas">
           <Navigation onLogout={handleLogout} />
-          <main className="pt-14 pb-[72px] max-w-[448px] mx-auto px-4" style={{ maxWidth: 'min(448px, 100%)' }}>
+          <main className="pt-14 md:pt-24 pb-[72px] md:pb-8 max-w-[448px] md:max-w-7xl mx-auto px-4 md:px-8 w-full transition-all duration-300">
             <div className="py-4">
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />

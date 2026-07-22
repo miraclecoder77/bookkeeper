@@ -104,7 +104,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onScanComplete }) => {
   }, [scanState, onScanComplete]);
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6 pb-24 md:pb-6">
       {/* 1. GREETING & TITLE */}
       <div>
         <p className="text-secondary text-sm font-medium mb-1">
@@ -116,7 +116,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onScanComplete }) => {
       </div>
 
       {/* 2. METRIC GRID */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         {/* Card 1: Net Income */}
         <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
           <p className="text-secondary text-xs font-semibold mb-1">Net Income</p>
@@ -159,8 +159,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onScanComplete }) => {
         </div>
       </div>
 
-      {/* 3. OCR RECEIPT SCANNER MODULE */}
-      <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="md:col-span-7 lg:col-span-8 space-y-6">
+          {/* 3. INCOME CHART CARD */}
+          <div className="bg-surface rounded-2xl p-4 border border-default shadow-card h-full">
+            <div className="mb-4">
+              <h2 className="font-display font-bold text-base text-primary">Income vs Expenses</h2>
+              <p className="text-xs text-secondary font-medium">Last 7 months</p>
+            </div>
+            <div className="h-[180px] md:h-[220px] w-full -ml-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8' }} dy={10} />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#080B14', borderColor: '#1E293B', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Area type="monotone" dataKey="income" stroke="#16A34A" strokeWidth={2} fillOpacity={0.15} fill="#16A34A" />
+                  <Area type="monotone" dataKey="expenses" stroke="#DC2626" strokeWidth={2} strokeDasharray="4 4" fillOpacity={0.05} fill="#DC2626" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-4 mt-2 text-[10px] font-semibold text-secondary">
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-income" /> Income</div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-expense" /> Expenses</div>
+            </div>
+          </div>
+
+          {/* 4. OCR RECEIPT SCANNER MODULE */}
+          <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
             <ScanLine className="w-5 h-5" />
@@ -303,36 +331,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onScanComplete }) => {
             </button>
           </div>
         )}
-      </div>
-
-      {/* 4. INCOME CHART CARD */}
-      <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
-        <div className="mb-4">
-          <h2 className="font-display font-bold text-base text-primary">Income vs Expenses</h2>
-          <p className="text-xs text-secondary font-medium">Last 7 months</p>
-        </div>
-        <div className="h-[180px] w-full -ml-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8' }} dy={10} />
-              <YAxis hide />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#080B14', borderColor: '#1E293B', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                itemStyle={{ color: '#fff' }}
-              />
-              <Area type="monotone" dataKey="income" stroke="#16A34A" strokeWidth={2} fillOpacity={0.15} fill="#16A34A" />
-              <Area type="monotone" dataKey="expenses" stroke="#DC2626" strokeWidth={2} strokeDasharray="4 4" fillOpacity={0.05} fill="#DC2626" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex justify-center gap-4 mt-2 text-[10px] font-semibold text-secondary">
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-income" /> Income</div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-expense" /> Expenses</div>
         </div>
       </div>
+      <div className="md:col-span-5 lg:col-span-4 space-y-6">
 
       {/* 5. RECENT TRANSACTIONS */}
-      <div className="bg-surface rounded-2xl p-4 border border-default shadow-card">
+      <div className="bg-surface rounded-2xl p-4 border border-default shadow-card h-full">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-base text-primary">Recent Transactions</h2>
           <Link to="/activity" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -356,6 +360,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onScanComplete }) => {
             </div>
           ))}
         </div>
+      </div>
+      
+      </div>
       </div>
 
       {/* 6. AI FAB & BOTTOM SHEET */}

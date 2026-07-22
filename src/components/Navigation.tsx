@@ -179,6 +179,29 @@ export const Navigation: React.FC<NavigationProps> = ({ onLogout: _onLogout }) =
             <SyncDetail status={syncStatusValue} />
           </Link>
 
+          {/* ── MIDDLE: Desktop Navigation ── */}
+          <nav className="hidden md:flex items-center gap-8" aria-label="Desktop main navigation">
+            {NAV_ITEMS.map((item, i) => {
+              const isActive = i === activeIndex;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={[
+                    'text-sm font-semibold transition-colors flex items-center gap-2',
+                    isActive
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100',
+                  ].join(' ')}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
           {/* ── RIGHT: Sync dot + theme toggle ── */}
           <div className="flex items-center gap-2">
 
@@ -215,10 +238,10 @@ export const Navigation: React.FC<NavigationProps> = ({ onLogout: _onLogout }) =
       </header>
 
       {/* ════════════════════════════════════════════════════════════════════
-          BOTTOM NAV — fixed, z-40, glass-nav, safe-area aware
+          BOTTOM NAV — fixed, z-40, glass-nav, safe-area aware (hidden on desktop)
           ════════════════════════════════════════════════════════════════════ */}
       <nav
-        className="glass-nav fixed inset-x-0 bottom-0 z-40"
+        className="glass-nav fixed inset-x-0 bottom-0 z-40 md:hidden"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
         aria-label="Main navigation"
       >
