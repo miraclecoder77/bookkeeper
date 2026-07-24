@@ -355,6 +355,23 @@ export const invoices = {
     }
   },
 
+  async delete(id: string): Promise<DalResult<void>> {
+    try {
+      const db = getDB();
+      const allItems = await db.getAll('invoiceLineItems');
+      const tx = db.transaction('invoiceLineItems', 'readwrite');
+      for (const item of allItems.filter(item => item.invoiceId === id)) {
+        await tx.store.delete(item.id);
+      }
+      await tx.done;
+      await invoiceCrud.delete(id);
+      await sync.markChange();
+      return okRes(undefined);
+    } catch (e: any) {
+      return errRes('DB_ERROR', e.message);
+    }
+  },
+
   async recordPayment(id: string, payment: { amount: number; date: string; method: string }): Promise<DalResult<Invoice>> {
     try {
       const detailsResult = await this.get(id);

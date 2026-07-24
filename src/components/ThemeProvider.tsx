@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
+const THEME_STORAGE_KEY = 'bookkeeper-theme';
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,8 +12,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
+
+    // Preserve a preference saved by earlier versions of the app.
+    const legacySaved = localStorage.getItem('theme');
+    if (legacySaved === 'dark' || legacySaved === 'light') return legacySaved;
+
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
@@ -23,7 +29,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('theme', theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.removeItem('theme');
   }, [theme]);
 
   const toggleTheme = () => {

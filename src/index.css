@@ -8,10 +8,15 @@
 
 /* ─── CSS Custom Properties ─────────────────────────────────────────────── */
 :root {
+  color-scheme: light;
   /* Light mode tokens */
   --canvas:        #F8FAFC;
+  --canvas-rgb:    248 250 252;
   --surface:       #FFFFFF;
+  --surface-rgb:   255 255 255;
   --surface-2:     #F1F5F9;
+  --surface-2-rgb: 241 245 249;
+  --surface-3-rgb: 248 250 252;
   --text-primary:  #0F172A;
   --text-secondary:#475569;
   --text-muted:    #64748B;
@@ -41,10 +46,15 @@
 }
 
 .dark {
+  color-scheme: dark;
   --canvas:        #080B14;
+  --canvas-rgb:    8 11 20;
   --surface:       #0F1320;
+  --surface-rgb:   15 19 32;
   --surface-2:     #151A2B;
+  --surface-2-rgb: 21 26 43;
   --surface-3:     #181E31;
+  --surface-3-rgb: 24 30 49;
   --text-primary:  #F1F5FC;
   --text-secondary:#B0BBD1;
   --text-muted:    #828FAA;
@@ -104,7 +114,12 @@
     color: inherit;
   }
 
-  button { font-family: inherit; }
+  button,
+  [type='button'],
+  [type='reset'],
+  [type='submit'] {
+    font-family: inherit;
+  }
 
   /* Instant colour transitions on theme switch — no layout movement */
   *, *::before, *::after {
@@ -263,7 +278,9 @@
     gap: 8px;
     min-height: 44px;
     padding: 0 20px;
-    border-radius: var(--r-sm);
+    border-radius: inherit;
+    background-color: transparent;
+    box-shadow: none;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 600;
