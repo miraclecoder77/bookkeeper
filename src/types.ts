@@ -17,6 +17,7 @@ export interface Client {
   id: string;
   name: string;
   companyName?: string;
+  contactName?: string;
   email: string;
   phone?: string;
   billingAddress?: string;
@@ -30,14 +31,14 @@ export interface Client {
 export interface Category {
   id: string;
   name: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   isTaxDeductible: boolean;
   isSystemDefault: boolean;
 }
 
 export interface Transaction {
   id: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   date: string; // YYYY-MM-DD
   amountMinorUnits: number;
   currency: string;
@@ -47,6 +48,8 @@ export interface Transaction {
   invoiceId?: string | null;
   paymentMethod: 'bank_transfer' | 'mobile_money' | 'cash' | 'card' | 'other';
   notes?: string;
+  payee?: string | null;
+  account?: string | null;
   receiptAttachmentId?: string | null;
   sourceCapturedDocumentId?: string | null;
   createdAt: string;

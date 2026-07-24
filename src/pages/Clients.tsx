@@ -1,17 +1,160 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useClients } from '../hooks/useClients';
 import { useInvoices } from '../hooks/useInvoices';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { Money } from '../components/Money';
+import { Input } from '../components/Input';
+import { Textarea } from '../components/Textarea';
 import { Search, Plus, ChevronRight, Users, X } from 'lucide-react';
 
+type ClientFormState = {
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  billingAddress: string;
+  notes: string;
+};
+
+const DEFAULT_CLIENT_FORM_STATE: ClientFormState = {
+  companyName: '',
+  contactName: '',
+  email: '',
+  phone: '',
+  billingAddress: '',
+  notes: '',
+};
+
 export const Clients: React.FC = () => {
-  const { clients } = useClients();
+  const { clients, addClient } = useClients();
   const { invoices } = useInvoices();
   const { profile } = useUserProfile();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [clientForm, setClientForm] = useState<ClientFormState>(DEFAULT_CLIENT_FORM_STATE);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const currency = profile?.baseCurrency || 'GBP';
+
+  useEffect(() => {
+    if (!isAddModalOpen) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeClientModal();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !modalRef.current) {
+        return;
+      }
+
+      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (focusableElements.length === 0) {
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    requestAnimationFrame(() => {
+      const firstFocusable = modalRef.current?.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      firstFocusable?.focus();
+    });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [isAddModalOpen]);
+
+  const closeClientModal = () => {
+    setClientForm(DEFAULT_CLIENT_FORM_STATE);
+    setFormErrors({});
+    setSaving(false);
+    setIsAddModalOpen(false);
+  };
+
+  const handleClientFieldChange = <K extends keyof ClientFormState>(key: K, value: ClientFormState[K]) => {
+    setClientForm(prev => ({ ...prev, [key]: value }));
+    setFormErrors(prev => ({ ...prev, [key]: '' }));
+  };
+
+  const validateClientForm = () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!clientForm.companyName.trim()) {
+      nextErrors.companyName = 'Company / client name is required';
+    }
+
+    if (!clientForm.contactName.trim()) {
+      nextErrors.contactName = 'Primary contact name is required';
+    }
+
+    if (!clientForm.email.trim()) {
+      nextErrors.email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientForm.email)) {
+      nextErrors.email = 'Enter a valid email address';
+    }
+
+    setFormErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleCreateClient = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!validateClientForm()) {
+      return;
+    }
+
+    setSaving(true);
+
+    const created = await addClient({
+      name: clientForm.companyName.trim(),
+      companyName: clientForm.companyName.trim(),
+      contactName: clientForm.contactName.trim(),
+      email: clientForm.email.trim(),
+      phone: clientForm.phone.trim() || undefined,
+      billingAddress: clientForm.billingAddress.trim() || undefined,
+      defaultCurrency: currency,
+      defaultPaymentTermsDays: 14,
+      notes: clientForm.notes.trim() || undefined,
+    });
+
+    setSaving(false);
+
+    if (created) {
+      closeClientModal();
+    } else {
+      setFormErrors(prev => ({ ...prev, submit: 'Unable to create client right now. Please try again.' }));
+    }
+  };
 
   // Compute combined data
   const clientData = useMemo(() => {
@@ -98,9 +241,13 @@ export const Clients: React.FC = () => {
           </p>
           <h1 className="font-display font-bold text-2xl text-primary">Clients</h1>
         </div>
-        <button className="btn btn-ghost h-11 px-4 text-sm gap-1.5 border border-default shadow-sm bg-surface-2">
-          <Plus className="w-4 h-4" />
-          Add
+        <button
+          type="button"
+          onClick={() => setIsAddModalOpen(true)}
+          className="btn btn-ghost h-11 px-3 flex items-center gap-2 rounded-xl"
+        >
+          <Plus className="w-4 h-4 text-secondary" />
+          <span className="text-sm font-semibold text-primary">Add Client</span>
         </button>
       </div>
 
@@ -215,6 +362,117 @@ export const Clients: React.FC = () => {
           </div>
         )}
       </div>
+
+      {isAddModalOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in"
+            onClick={closeClientModal}
+          />
+          <div className="fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4">
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="client-modal-title"
+            aria-describedby="client-modal-description"
+            tabIndex={-1}
+            className="relative w-full max-w-xl rounded-t-[24px] sm:rounded-[24px] border border-default bg-surface shadow-2xl max-h-[90dvh] sm:max-h-[85dvh] flex flex-col overflow-hidden animate-scale-in"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-default bg-surface p-4 sm:p-5">
+              <div>
+                <h2 id="client-modal-title" className="font-display font-bold text-xl text-primary">Create Client</h2>
+                <p id="client-modal-description" className="text-xs text-secondary">Add a new client and their billing details.</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeClientModal}
+                aria-label="Close create client modal"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-offset-2"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateClient} className="flex min-h-0 flex-1 flex-col">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Company / Client Name"
+                  value={clientForm.companyName}
+                  onChange={(e) => handleClientFieldChange('companyName', e.target.value)}
+                  error={formErrors.companyName}
+                  placeholder="Acme Studio"
+                  autoComplete="organization"
+                />
+                <Input
+                  label="Primary Contact Name"
+                  value={clientForm.contactName}
+                  onChange={(e) => handleClientFieldChange('contactName', e.target.value)}
+                  error={formErrors.contactName}
+                  placeholder="Maya Chen"
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Email Address"
+                  type="email"
+                  value={clientForm.email}
+                  onChange={(e) => handleClientFieldChange('email', e.target.value)}
+                  error={formErrors.email}
+                  placeholder="maya@acme.com"
+                  autoComplete="email"
+                />
+                <Input
+                  label="Phone Number"
+                  type="tel"
+                  value={clientForm.phone}
+                  onChange={(e) => handleClientFieldChange('phone', e.target.value)}
+                  error={formErrors.phone}
+                  placeholder="+1 555 123 4567"
+                  autoComplete="tel"
+                />
+              </div>
+
+              <Textarea
+                label="Billing Address"
+                value={clientForm.billingAddress}
+                onChange={(e) => handleClientFieldChange('billingAddress', e.target.value)}
+                error={formErrors.billingAddress}
+                placeholder="123 Business Ave, City, Country"
+                className="min-h-[88px]"
+              />
+
+              <Textarea
+                label="Initial Balance / Notes"
+                value={clientForm.notes}
+                onChange={(e) => handleClientFieldChange('notes', e.target.value)}
+                error={formErrors.notes}
+                placeholder="Optional notes or opening balance context"
+                className="min-h-[92px]"
+              />
+
+              {formErrors.submit && (
+                <p className="text-sm text-red-600 dark:text-red-400">{formErrors.submit}</p>
+              )}
+              </div>
+
+              <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-default bg-surface p-4 sm:p-5">
+                <button type="button" onClick={closeClientModal} className="btn btn-ghost">
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? 'Creating...' : 'Create Client'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        </>
+      )}
     </div>
   );
 };

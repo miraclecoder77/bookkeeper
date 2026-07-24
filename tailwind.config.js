@@ -7,6 +7,33 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Brand alias used by the design system
+        brand: {
+          50:  '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          300: '#A5B4FC',
+          400: '#818CF8',
+          500: '#6366F1',
+          600: '#4F46E5',
+          700: '#4338CA',
+          800: '#3730A3',
+          900: '#312E81',
+          950: '#1E1B4B',
+        },
+        danger: {
+          50:  '#FEF2F2',
+          100: '#FEE2E2',
+          200: '#FECACA',
+          300: '#FCA5A5',
+          400: '#F87171',
+          500: '#EF4444',
+          600: '#DC2626',
+          700: '#B91C1C',
+          800: '#991B1B',
+          900: '#7F1D1D',
+          950: '#450A0A',
+        },
         // Brand — indigo/violet
         indigo: {
           50:  '#EEF2FF',
@@ -33,9 +60,14 @@ module.exports = {
           800: '#5B21B6',
           900: '#4C1D95',
         },
-        // Canvas / surface tokens (map CSS vars)
-        canvas:    { DEFAULT: '#F8FAFC', dark: '#080B14' },
-        surface:   { DEFAULT: '#FFFFFF', dark: '#0F1320', 2: '#F1F5F9', '2-dark': '#151A2B', 3: '#F8FAFC', '3-dark': '#181E31' },
+        // Canvas / surface tokens are theme-aware CSS variables. The alpha placeholder
+        // keeps utilities such as `bg-surface-2/60` working as expected.
+        canvas: 'rgb(var(--canvas-rgb) / <alpha-value>)',
+        surface: {
+          DEFAULT: 'rgb(var(--surface-rgb) / <alpha-value>)',
+          2: 'rgb(var(--surface-2-rgb) / <alpha-value>)',
+          3: 'rgb(var(--surface-3-rgb) / <alpha-value>)',
+        },
 
         // Semantic
         income:      { DEFAULT: '#16A34A', dark: '#34D399' },
@@ -88,6 +120,7 @@ module.exports = {
       },
       backgroundImage: {
         'brand-gradient':   'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%)',
+        'gradient-brand':  'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%)',
         'brand-gradient-dk':'linear-gradient(135deg, #6366F1 0%, #A78BFA 100%)',
         'hero-glow':        'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.25) 0%, transparent 70%)',
         'grid':             "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")",
