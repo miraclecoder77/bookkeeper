@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { initDB } from './services/indexeddb';
 import * as dal from './services/dal';
+import { getCurrentUser } from './services/auth';
 import { Navigation } from './components/Navigation';
 import { ThemeProvider } from './components/ThemeProvider';
 import { LandingPage } from './pages/LandingPage';
+import { Login } from './pages/Login';
 import { Onboarding } from './pages/Onboarding';
 import { Dashboard } from './pages/Dashboard';
 import { Activity } from './pages/Activity';
@@ -16,8 +18,9 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [wiped, setWiped] = useState(false);
 
   useEffect(() => {
@@ -51,7 +54,10 @@ const App: React.FC = () => {
           }
         }
 
-        // 2. Load user profile
+        // 2. Load user profile and auth state
+        const user = await getCurrentUser();
+        setIsAuthenticated(!!user);
+
         const profRes = await dal.profile.get();
         if (profRes.ok && profRes.data) {
           const userProf = profRes.data;
@@ -80,6 +86,22 @@ const App: React.FC = () => {
     if (profRes.ok && profRes.data) {
       setProfile(profRes.data);
       setNeedsOnboarding(false);
+    }
+  };
+
+  const handleLoginSuccess = async () => {
+    setIsAuthenticated(true);
+    setShowLogin(false);
+    const profRes = await dal.profile.get();
+    if (profRes.ok && profRes.data) {
+      if (profRes.data.displayName === 'Freelancer') {
+        setNeedsOnboarding(true);
+      } else {
+        setProfile(profRes.data);
+        setNeedsOnboarding(false);
+      }
+    } else {
+      setNeedsOnboarding(true);
     }
   };
 
@@ -146,16 +168,22 @@ const App: React.FC = () => {
     );
   }
 
-  // If user is not onboarded, default to landing page.
-  // Clicking "Get Started" on the landing page will set showOnboarding to true.
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider>
+        {showLogin ? (
+          <Login onLoginSuccess={handleLoginSuccess} />
+        ) : (
+          <LandingPage onGetStarted={() => setShowLogin(true)} />
+        )}
+      </ThemeProvider>
+    );
+  }
+
   if (needsOnboarding) {
     return (
       <ThemeProvider>
-        {showOnboarding ? (
-          <Onboarding onComplete={handleOnboardingComplete} />
-        ) : (
-          <LandingPage onGetStarted={() => setShowOnboarding(true)} />
-        )}
+        <Onboarding onComplete={handleOnboardingComplete} />
       </ThemeProvider>
     );
   }
@@ -172,7 +200,7 @@ const App: React.FC = () => {
                 <Route path="/activity"  element={<Activity />} />
                 <Route path="/invoices"  element={<Invoices />} />
                 <Route path="/clients"   element={<Clients />} />
-                <Route path="/settings"  element={<Settings />} />
+                <Route path="/settings"  element={<Settings onLogout={handleLogout} />} />
                 <Route path="*"          element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </div>

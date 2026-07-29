@@ -211,14 +211,7 @@ export const Activity: React.FC = () => {
 
   // Group transactions
   const groupedTransactions = useMemo(() => {
-    // Determine the base list: either real hook data or static fallback
-    let list = transactions.length > 0 ? [...transactions] : [
-      { id: '1', notes: 'Client Project — Acme', type: 'income', date: new Date().toISOString(), amountMinorUnits: 120000, currency: 'GBP', category: 'Bank transfer' },
-      { id: '2', notes: 'Adobe Creative Cloud', type: 'expense', date: new Date().toISOString(), amountMinorUnits: 5498, currency: 'GBP', category: 'Software · Recurring' },
-      { id: '3', notes: 'Invoice #INV-042 paid', type: 'income', date: new Date(Date.now() - 86400000).toISOString(), amountMinorUnits: 340000, currency: 'GBP', category: 'Nova Labs · 1:42 PM', isInvoice: true },
-      { id: '4', notes: 'Invoice #INV-044 sent', type: 'pending', date: new Date(Date.now() - 86400000).toISOString(), amountMinorUnits: 125000, currency: 'GBP', category: 'Acme Corp · Due 17 Apr', isInvoice: true },
-      { id: '5', notes: 'Figma Professional', type: 'expense', date: new Date(Date.now() - 2 * 86400000).toISOString(), amountMinorUnits: 1500, currency: 'GBP', category: 'Software · Recurring' },
-    ];
+    let list = [...transactions];
 
     // Filter
     if (filter !== 'All') {

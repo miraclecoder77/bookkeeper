@@ -25,7 +25,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         invoicingCurrency,
         fiscalYearStart,
         jurisdiction,
-        syncMode: 'local_only',
       });
       onComplete();
     } catch (err) {

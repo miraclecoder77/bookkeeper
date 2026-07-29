@@ -1,6 +1,10 @@
 export interface UserProfile {
   id: string;
   displayName: string;
+  email?: string;
+  businessName?: string;
+  businessAddress?: string;
+  defaultTaxRate?: number;
   baseCurrency: string;
   invoicingCurrency: string;
   fiscalYearStart: string; // MM-DD
@@ -179,6 +183,35 @@ export interface AIConsent {
   excludedClientIds: string[];
   excludedCategoryIds: string[];
   lastRevokedAt?: string | null;
+}
+
+// Business settings (used by drive.ts and useSettings.ts)
+export interface BusinessSettings {
+  id: string;
+  name: string;
+  currency: string;
+  logo?: string;
+  taxId?: string;
+  businessAddress?: string;
+  defaultTaxRate?: number;
+}
+
+// Sync status (exposed by syncManager, consumed by useSyncStatus)
+export interface SyncStatus {
+  status: 'idle' | 'syncing' | 'error' | 'offline' | 'local';
+  lastSync?: Date;
+  error?: string;
+}
+
+// App-wide UI preferences (persisted in localStorage)
+export interface AppPreferences {
+  remindersEnabled: boolean;
+  reminderSchedule: Array<'3_days_before' | 'day_of' | '7_days_overdue'>;
+  emailTemplate: string;
+  autoLockMinutes: number | null; // null = never
+  passcodeEnabled: boolean;
+  biometricEnabled: boolean;
+  conflictStrategy: 'keep_local' | 'keep_cloud';
 }
 
 // Retro-compatible User interface for shell compatibility

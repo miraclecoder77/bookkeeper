@@ -13,7 +13,8 @@ import {
   Device,
   CapturedDocument,
   Insight,
-  AIConsent
+  AIConsent,
+  User
 } from '../types';
 
 interface BookkeeperDB extends DBSchema {
@@ -69,6 +70,10 @@ interface BookkeeperDB extends DBSchema {
     key: string;
     value: AIConsent;
   };
+  users: {
+    key: string;
+    value: User;
+  };
 }
 
 let db: IDBPDatabase<BookkeeperDB> | null = null;
@@ -87,8 +92,8 @@ const DEFAULT_CATEGORIES: Category[] = [
 export const initDB = async (): Promise<IDBPDatabase<BookkeeperDB>> => {
   if (db) return db;
 
-  // We increment the version to DB_VERSION + 1 or force DB_VERSION=2 to trigger upgrades
-  db = await openDB<BookkeeperDB>(DB_NAME, 2, {
+  // We increment the version to DB_VERSION + 1 or force DB_VERSION=3 to trigger upgrades
+  db = await openDB<BookkeeperDB>(DB_NAME, 3, {
     upgrade(db, oldVersion, newVersion) {
       // Helper function to create stores if they don't exist
       const createStore = (name: any, options = { keyPath: 'id' }) => {
@@ -110,6 +115,7 @@ export const initDB = async (): Promise<IDBPDatabase<BookkeeperDB>> => {
       createStore('capturedDocuments');
       createStore('insights');
       createStore('aiConsent');
+      createStore('users');
     },
   });
 
@@ -204,3 +210,23 @@ export function createCrudHelpers<T extends { id: string }>(storeName: keyof Boo
     }
   };
 }
+
+export const saveUser = async (user: User): Promise<void> => {
+  const db = getDB();
+  await db.put('users', user);
+};
+
+export const getUser = async (): Promise<User | undefined> => {
+  const db = getDB();
+  const users = await db.getAll('users');
+  return users[0];
+};
+
+export const deleteUser = async (): Promise<void> => {
+  const db = getDB();
+  const users = await db.getAll('users');
+  for (const u of users) {
+    await db.delete('users', u.id);
+  }
+};
+
