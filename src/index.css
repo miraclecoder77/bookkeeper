@@ -144,6 +144,7 @@
   .bg-canvas   { background-color: var(--canvas); }
   .bg-surface  { background-color: var(--surface); }
   .bg-surface-2{ background-color: var(--surface-2); }
+  .bg-surface-3{ background-color: var(--surface-3, var(--surface-2)); }
   .text-primary   { color: var(--text-primary); }
   .text-secondary { color: var(--text-secondary); }
   .text-muted     { color: var(--text-muted); }

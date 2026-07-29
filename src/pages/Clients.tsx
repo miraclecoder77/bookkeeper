@@ -193,12 +193,7 @@ export const Clients: React.FC = () => {
       });
     }
 
-    return [
-      { id: '1', name: 'Acme Corp', contactName: 'Maya Chen', activitySummary: 'Invoice sent yesterday', totalMinorUnits: 1280000, balanceMinorUnits: 125000, statusText: 'due', statusType: 'due' },
-      { id: '2', name: 'Nova Labs', contactName: 'Andre Valdez', activitySummary: 'Paid invoice today', totalMinorUnits: 960000, balanceMinorUnits: 0, statusText: 'All settled', statusType: 'settled' },
-      { id: '3', name: 'Northstar Studio', contactName: 'Robin Park', activitySummary: 'Active project', totalMinorUnits: 640000, balanceMinorUnits: 240000, statusText: 'due', statusType: 'due' },
-      { id: '4', name: 'Formfield', contactName: 'Devon Baker', activitySummary: 'No activity this month', totalMinorUnits: 215000, balanceMinorUnits: 98000, statusText: 'draft', statusType: 'draft' },
-    ];
+    return [];
   }, [clients, invoices]);
 
   // Filters
@@ -215,7 +210,7 @@ export const Clients: React.FC = () => {
   }, [clientData, searchQuery]);
 
   // Stats
-  const activeClientsCount = clients.length || 12;
+  const activeClientsCount = clients.length;
   const totalOpenBalances = clientData.filter(c => c.statusType === 'due').reduce((sum, c) => sum + c.balanceMinorUnits, 0);
 
   const getClientColor = (name: string) => {

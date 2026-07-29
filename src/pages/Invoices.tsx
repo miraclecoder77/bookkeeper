@@ -535,12 +535,7 @@ export const Invoices: React.FC = () => {
       });
     }
 
-    return [
-      { id: '1', clientName: 'Northstar Studio', number: 'INV-046', description: 'Brand system — Phase 2', amountMinorUnits: 240000, dueDate: '2026-04-24', status: 'sent' }, // Due soon
-      { id: '2', clientName: 'Acme Corp', number: 'INV-045', description: 'Product design retainer', amountMinorUnits: 125000, dueDate: '2026-04-17', status: 'overdue' },
-      { id: '3', clientName: 'Nova Labs', number: 'INV-044', description: 'UX audit & roadmap', amountMinorUnits: 340000, dueDate: '2026-04-15', status: 'paid' },
-      { id: '4', clientName: 'Formfield', number: 'INV-043', description: 'Research workshop', amountMinorUnits: 98000, dueDate: '', status: 'draft' },
-    ];
+    return [];
   }, [invoices, clientMap]);
 
   // Stats

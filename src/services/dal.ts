@@ -1008,38 +1008,7 @@ export const ai = {
         return okRes([]); // Gate active - returns empty list if no consent
       }
 
-      // Generate a mock list of insights
-      const mockInsights: Insight[] = [
-        {
-          id: 'ins_1',
-          type: 'trend',
-          title: 'Power & Fuel Expense Spike',
-          body: 'Your spending on generator fuel increased by 35% this month. Consider tracking backup inverter battery health to optimize fuel costs.',
-          dataRangeCovered: { start: '2026-06-01', end: '2026-07-01' },
-          relatedEntityIds: [],
-          modelUsed: 'local_computed',
-          generatedAt: new Date().toISOString(),
-          status: 'active'
-        },
-        {
-          id: 'ins_2',
-          type: 'reminder',
-          title: 'Unpaid Invoices Follow-up',
-          body: 'Client "Glo Telecom" has an invoice overdue by 14 days. We suggest sending a WhatsApp reminder.',
-          dataRangeCovered: { start: '2026-06-01', end: '2026-07-01' },
-          relatedEntityIds: [],
-          modelUsed: 'gemini_3_5_flash',
-          generatedAt: new Date().toISOString(),
-          status: 'active'
-        }
-      ];
-
-      // Store in DB
-      for (const ins of mockInsights) {
-        await insightCrud.create(ins);
-      }
-
-      return okRes(mockInsights);
+      return okRes([]);
     } catch (e: any) {
       return errRes('AI_ERROR', e.message);
     }
@@ -1076,7 +1045,7 @@ export const ai = {
       localStorage.setItem('bk_ai_activity_log', JSON.stringify(activityLog));
 
       return okRes({
-        answer: `Gemini 3.5 Flash: Based on your overall ledger history, your top client is Glo Telecom contributing 65% of your consulting earnings. Your tax liability is well within limits.`,
+        answer: `I am unable to answer that at the moment as AI generation is not fully implemented.`,
         modelUsed: 'gemini_3_5_flash'
       });
     } catch (e: any) {
