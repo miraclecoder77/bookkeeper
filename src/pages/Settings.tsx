@@ -61,8 +61,8 @@ export const Settings: React.FC<SettingsProps> = ({ onLogout }) => {
   const close = ()              => setActiveSheet(null);
 
   // ── Derived display values ──────────────────────────────────────────────
-  const name         = profile?.displayName || 'Kay Concept';
-  const email        = profile?.email       || 'kay@northstar.design';
+  const name         = profile?.displayName || 'your brand name';
+  const email        = profile?.email       || 'email@example.com';
   const businessName = profile?.businessName || profile?.displayName || 'Northstar Design Ltd';
   const initials     = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
