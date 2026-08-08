@@ -959,10 +959,10 @@ export const Invoices: React.FC = () => {
       <div className="bg-surface rounded-2xl p-5 shadow-card border-y border-r border-l-4 border-default border-l-outstanding">
         <p className="text-secondary text-sm font-semibold mb-1">Outstanding this month</p>
         <div className="font-display font-bold text-[32px] leading-tight text-outstanding mb-1">
-          <Money amountMinorUnits={invoices.length ? totalOutstanding : 365000} currency={currency} />
+          <Money amountMinorUnits={invoices.length ? totalOutstanding : 0.00} currency={currency} />
         </div>
         <p className="text-secondary text-xs font-medium mb-4">
-          {invoices.length ? openCount : 3} awaiting payment
+          {invoices.length ? openCount : 0} awaiting payment
         </p>
         
         <div className="space-y-2">
@@ -973,7 +973,7 @@ export const Invoices: React.FC = () => {
             />
           </div>
           <p className="text-secondary text-xs">
-            <Money amountMinorUnits={invoices.length ? totalPaid : 870000} currency={currency} /> paid of <Money amountMinorUnits={invoices.length ? totalBilled : 1235000} currency={currency} /> billed
+            <Money amountMinorUnits={invoices.length ? totalPaid : 0.00} currency={currency} /> paid of <Money amountMinorUnits={invoices.length ? totalBilled : 0.00} currency={currency} /> billed
           </p>
         </div>
       </div>

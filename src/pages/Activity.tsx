@@ -456,7 +456,7 @@ export const Activity: React.FC = () => {
           <div className="flex items-center gap-2">
             <ArrowDownLeft className="w-5 h-5 text-income shrink-0" />
             <div className="font-display font-bold text-xl text-income">
-              <Money amountMinorUnits={transactions.length ? moneyIn : 580000} currency={currency} />
+              <Money amountMinorUnits={transactions.length ? moneyIn : 0.00} currency={currency} />
             </div>
           </div>
         </div>
@@ -465,7 +465,7 @@ export const Activity: React.FC = () => {
           <div className="flex items-center gap-2">
             <ArrowUpRight className="w-5 h-5 text-expense shrink-0" />
             <div className="font-display font-bold text-xl text-expense">
-              <Money amountMinorUnits={transactions.length ? moneyOut : 48600} currency={currency} />
+              <Money amountMinorUnits={transactions.length ? moneyOut : 0.00} currency={currency} />
             </div>
           </div>
         </div>
